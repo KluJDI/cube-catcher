@@ -9,98 +9,408 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: #111;
+      background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
       color: white;
-      font-family: sans-serif;
+      font-family: 'Arial', sans-serif;
+      touch-action: manipulation;
+      height: 100%;
     }
     canvas {
       display: block;
     }
+    #ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
     #score {
       position: absolute;
-      top: 10px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 24px;
-      z-index: 1;
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.5);
+      padding: 10px 20px;
+      border-radius: 20px;
+    }
+    #start-screen, #game-over {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0,0,0,0.7);
+      z-index: 10;
+    }
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(255,255,255,0.5);
+      color: #fdbb2d;
+    }
+    button {
+      background: linear-gradient(to bottom, #fdbb2d, #b21f1f);
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      font-size: 1.2em;
+      border-radius: 30px;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+    #game-over {
+      display: none;
+    }
+    #final-score {
+      font-size: 2em;
+      margin: 20px 0;
+    }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-<div id="score">Score: 0</div>
+<div id="ui">
+  <div id="score">0</div>
+</div>
+
+<div id="start-screen">
+  <h1>CubeCatcher</h1>
+  <p>Catch falling cubes with the basketball hoop!</p>
+  <button id="start-btn">Start Game</button>
+</div>
+
+<div id="game-over">
+  <h1>Game Over</h1>
+  <div id="final-score">Score: 0</div>
+  <button id="restart-btn">Play Again</button>
+</div>
+
 <canvas id="gameCanvas"></canvas>
 
 <script>
+  // Game elements
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
+  const scoreElement = document.getElementById('score');
+  const startScreen = document.getElementById('start-screen');
+  const gameOverScreen = document.getElementById('game-over');
+  const finalScoreElement = document.getElementById('final-score');
+  const startBtn = document.getElementById('start-btn');
+  const restartBtn = document.getElementById('restart-btn');
+  
+  // Game state
   let score = 0;
-  let ring = { x: 200, y: 500, radius: 40 };
+  let gameRunning = false;
+  let animationFrameId;
+  let lastSpawnTime = 0;
+  let particles = [];
+  
+  // Game objects
+  let ring = { 
+    x: 200, 
+    y: 500, 
+    radius: 50,
+    color: '#FF5722',
+    netLength: 70,
+    netWidth: 30
+  };
+  
   let cubes = [];
-
+  let backgroundStars = [];
+  
+  // Initialize background stars
+  for (let i = 0; i < 100; i++) {
+    backgroundStars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 2 + 1,
+      opacity: Math.random() * 0.5 + 0.5
+    });
+  }
+  
+  // Resize canvas to fit window
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    ring.y = canvas.height - 100;
+    ring.y = canvas.height - 120;
+    
+    // Reset ring position to center
+    ring.x = canvas.width / 2;
   }
-
+  
   window.addEventListener('resize', resize);
   resize();
-
+  
+  // Create a new cube with random properties
   function spawnCube() {
-    const size = 20 + Math.random() * 20;
+    const size = 20 + Math.random() * 30;
+    const colors = ['#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    
     cubes.push({
       x: Math.random() * (canvas.width - size),
       y: -size,
-      size,
-      speed: 2 + Math.random() * 3,
+      size: size,
+      speed: 2 + Math.random() * 4,
+      color: color,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.1,
+      points: Math.ceil(size / 10)
     });
   }
-
-  setInterval(spawnCube, 700);
-
-  function update() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Draw ring
+  
+  // Create particles for effects
+  function createParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 3 + 1;
+      
+      particles.push({
+        x: x,
+        y: y,
+        size: Math.random() * 5 + 2,
+        color: color,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 60 + Math.random() * 40,
+        opacity: 1
+      });
+    }
+  }
+  
+  // Draw the basketball hoop
+  function drawRing() {
+    // Ring backboard
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillRect(ring.x - 5, ring.y - ring.radius - 80, 10, 80);
+    ctx.fillRect(ring.x - 50, ring.y - ring.radius - 10, 100, 10);
+    
+    // Ring metal
     ctx.beginPath();
     ctx.arc(ring.x, ring.y, ring.radius, 0, Math.PI * 2);
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = '#0f0';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = ring.color;
     ctx.stroke();
-
-    // Update cubes
+    
+    // Net
+    ctx.beginPath();
+    ctx.moveTo(ring.x, ring.y);
+    
+    const netSegments = 8;
+    const segmentWidth = ring.netWidth / netSegments;
+    
+    for (let i = 0; i <= netSegments; i++) {
+      const x = ring.x - ring.netWidth/2 + i * segmentWidth;
+      const y = ring.y + (i % 2 === 0 ? 0 : 10) + ring.netLength * (i / netSegments);
+      ctx.lineTo(x, y);
+    }
+    
+    for (let i = netSegments; i >= 0; i--) {
+      const x = ring.x + ring.netWidth/2 - i * segmentWidth;
+      const y = ring.y + (i % 2 === 0 ? 0 : 10) + ring.netLength * (i / netSegments);
+      ctx.lineTo(x, y);
+    }
+    
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.fill();
+  }
+  
+  // Update and draw all game objects
+  function update() {
+    const now = Date.now();
+    
+    // Clear canvas with semi-transparent background for motion blur effect
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw background stars
+    ctx.fillStyle = 'white';
+    backgroundStars.forEach(star => {
+      ctx.globalAlpha = star.opacity;
+      ctx.fillRect(star.x, star.y, star.size, star.size);
+    });
+    ctx.globalAlpha = 1;
+    
+    // Spawn new cubes periodically
+    if (gameRunning && now - lastSpawnTime > 700 - Math.min(score, 500) / 2) {
+      spawnCube();
+      lastSpawnTime = now;
+    }
+    
+    // Draw ring
+    drawRing();
+    
+    // Update and draw cubes
     for (let i = cubes.length - 1; i >= 0; i--) {
       const cube = cubes[i];
+      
+      // Update cube position and rotation
       cube.y += cube.speed;
-      ctx.fillStyle = '#0ff';
-      ctx.fillRect(cube.x, cube.y, cube.size, cube.size);
-
+      cube.rotation += cube.rotationSpeed;
+      
+      // Draw cube with rotation
+      ctx.save();
+      ctx.translate(cube.x + cube.size/2, cube.y + cube.size/2);
+      ctx.rotate(cube.rotation);
+      
+      // Cube face
+      ctx.fillStyle = cube.color;
+      ctx.fillRect(-cube.size/2, -cube.size/2, cube.size, cube.size);
+      
+      // Cube edges
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-cube.size/2, -cube.size/2, cube.size, cube.size);
+      
+      ctx.restore();
+      
+      // Check collision with ring
       const dx = cube.x + cube.size/2 - ring.x;
       const dy = cube.y + cube.size/2 - ring.y;
       const dist = Math.sqrt(dx*dx + dy*dy);
-
+      
       if (dist < ring.radius + cube.size/2) {
+        // Cube caught!
+        createParticles(cube.x + cube.size/2, cube.y + cube.size/2, cube.color, 15);
         cubes.splice(i, 1);
-        score++;
-        document.getElementById('score').textContent = 'Score: ' + score;
-      } else if (cube.y > canvas.height) {
-        cubes.splice(i, 1); // missed
+        score += cube.points;
+        scoreElement.textContent = score;
+        
+        // Animate score
+        scoreElement.style.transform = 'translateX(-50%) scale(1.2)';
+        setTimeout(() => {
+          scoreElement.style.transform = 'translateX(-50%) scale(1)';
+        }, 200);
+      } else if (cube.y > canvas.height + cube.size) {
+        // Cube missed - game over
+        cubes.splice(i, 1);
+        if (gameRunning) {
+          gameOver();
+        }
       }
     }
-
-    requestAnimationFrame(update);
+    
+    // Update and draw particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.1; // gravity
+      p.life--;
+      p.opacity = p.life / 100;
+      
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+    
+    if (gameRunning) {
+      animationFrameId = requestAnimationFrame(update);
+    }
   }
-
-  update();
-
+  
+  // Start the game
+  function startGame() {
+    score = 0;
+    scoreElement.textContent = score;
+    cubes = [];
+    particles = [];
+    gameRunning = true;
+    startScreen.style.display = 'none';
+    gameOverScreen.style.display = 'none';
+    lastSpawnTime = Date.now();
+    update();
+  }
+  
+  // End the game
+  function gameOver() {
+    gameRunning = false;
+    finalScoreElement.textContent = `Score: ${score}`;
+    gameOverScreen.style.display = 'flex';
+    cancelAnimationFrame(animationFrameId);
+  }
+  
+  // Event listeners
+  startBtn.addEventListener('click', startGame);
+  restartBtn.addEventListener('click', startGame);
+  
+  // Touch and mouse controls
+  function handleMove(x) {
+    if (!gameRunning) return;
+    
+    // Smooth movement
+    const targetX = Math.max(ring.radius, Math.min(x, canvas.width - ring.radius));
+    ring.x += (targetX - ring.x) * 0.2;
+  }
+  
   canvas.addEventListener('touchmove', e => {
     e.preventDefault();
     const touch = e.touches[0];
-    ring.x = touch.clientX;
+    handleMove(touch.clientX);
   }, { passive: false });
-
+  
   canvas.addEventListener('mousemove', e => {
-    ring.x = e.clientX;
+    handleMove(e.clientX);
   });
+  
+  // For Telegram Mini App integration
+  if (window.Telegram && window.Telegram.WebApp) {
+    // Expand the app to full viewport
+    Telegram.WebApp.expand();
+    
+    // Change background color to match Telegram theme
+    document.body.style.background = Telegram.WebApp.themeParams.bg_color || 'linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d)';
+    
+    // Adjust text color based on theme
+    const textColor = Telegram.WebApp.themeParams.text_color || 'white';
+    document.body.style.color = textColor;
+    document.querySelector('h1').style.color = textColor;
+    
+    // Handle back button
+    Telegram.WebApp.BackButton.onClick(() => {
+      if (gameRunning) {
+        gameOver();
+      } else {
+        Telegram.WebApp.close();
+      }
+    });
+    
+    // Show back button when game starts
+    startBtn.addEventListener('click', () => {
+      Telegram.WebApp.BackButton.show();
+    });
+  }
 </script>
 </body>
 </html>

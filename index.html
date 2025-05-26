@@ -9,7 +9,9 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: linear-gradient(to bottom, #ff00cc, #3333ff);
+      /* Ваше фоновое изображение */
+      background: url('https://i.pinimg.com/736x/34/93/f0/3493f04b8eddcb5e7d345bd5aef520bb.jpg') no-repeat center center fixed;
+      background-size: cover;
       color: white;
       font-family: 'Comic Sans MS', cursive, sans-serif;
       touch-action: manipulation;
@@ -239,6 +241,14 @@
   let particles = [];
   let floatingTexts = [];
   
+  // Ваши звуки
+  const sounds = {
+  catch: new Audio('sounds/catch.mp3'),
+  bomb: new Audio('sounds/bomb.wav'),
+  gameOver: new Audio('sounds/gameover.mp3'),
+  highScore: new Audio('sounds/highscore.mp3')
+};
+  
   // Meme types with different rarities
   const memeTypes = [
     { name: "Ждун", rarity: 1, points: 10 },
@@ -255,7 +265,7 @@
   
   // Load images
   function loadImages() {
-    // Meme images
+    // Ваши мем-изображения
     const memeUrls = [
       'https://steamuserimages-a.akamaihd.net/ugc/90472493367987320/2F4D0894F18F0C96AA64DA536DB0445FF62DB709/?imw=512&amp;imh=685&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true', // Ждун
       'https://www.pngmart.com/files/23/Pop-Cat-PNG-Isolated-HD.png', // Кот-кричалка
@@ -275,7 +285,7 @@
       memeImages.push(img);
     });
     
-    // Bomb image
+    // Ваше изображение бомбы
     bombImage.src = 'https://www.pngplay.com/wp-content/uploads/6/Animated-Bomb-Transparent-Free-PNG.png';
   }
   
@@ -386,8 +396,8 @@
       explosion.remove();
     }, 500);
     
-    // Play explosion sound
-    playSound('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3');
+    // Play your bomb sound
+    sounds.bomb.play().catch(e => console.log("Sound error:", e));
   }
   
   // Create floating text
@@ -540,8 +550,8 @@
           scoreElement.style.transform = 'translateX(-50%) scale(1) rotate(0)';
         }, 200);
         
-        // Play sound
-        playSound('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3');
+        // Play your catch sound
+        sounds.catch.play().catch(e => console.log("Sound error:", e));
       } else if (meme.y > canvas.height + meme.height) {
         // Meme missed
         memes.splice(i, 1);
@@ -607,9 +617,6 @@
           setTimeout(() => {
             document.body.style.animation = '';
           }, 500);
-          
-          // Play explosion sound
-          playSound('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3');
         }
       } else if (bomb.y > canvas.height + bomb.height) {
         // Bomb missed
@@ -686,13 +693,6 @@
     return colors[Math.floor(Math.random() * colors.length)];
   }
   
-  // Play sound effect
-  function playSound(url) {
-    const sound = new Audio(url);
-    sound.volume = 0.3;
-    sound.play().catch(e => console.log("Sound playback error:", e));
-  }
-  
   // Start the game
   function startGame() {
     score = 0;
@@ -722,6 +722,9 @@
     finalScoreElement.textContent = `Поймано: ${score} мемов`;
     gameOverScreen.style.display = 'flex';
     
+    // Play your game over sound
+    sounds.gameOver.play().catch(e => console.log("Sound error:", e));
+    
     // Update high score
     if (score > highScore) {
       highScore = score;
@@ -731,7 +734,9 @@
       // Special effect for new high score
       finalScoreElement.textContent = `НОВЫЙ РЕКОРД: ${highScore}!`;
       finalScoreElement.style.animation = 'rainbow 0.5s infinite';
-      playSound('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3');
+      
+      // Play your high score sound
+      sounds.highScore.play().catch(e => console.log("Sound error:", e));
     }
     
     cancelAnimationFrame(animationFrameId);

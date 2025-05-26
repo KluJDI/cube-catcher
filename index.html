@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CubeCatcher</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  let score = 0;
+  let ring = { x: 200, y: 500, radius: 40 };
+  let cubes = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    ring.y = canvas.height - 100;
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  function spawnCube() {
+    const size = 20 + Math.random() * 20;
+    cubes.push({
+      x: Math.random() * (canvas.width - size),
+      y: -size,
+      size,
+      speed: 2 + Math.random() * 3,
+    });
+  }
+
+  setInterval(spawnCube, 700);
+
+  function update() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw ring
+    ctx.beginPath();
+    ctx.arc(ring.x, ring.y, ring.radius, 0, Math.PI * 2);
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#0f0';
+    ctx.stroke();
+
+    // Update cubes
+    for (let i = cubes.length - 1; i >= 0; i--) {
+      const cube = cubes[i];
+      cube.y += cube.speed;
+      ctx.fillStyle = '#0ff';
+      ctx.fillRect(cube.x, cube.y, cube.size, cube.size);
+
+      const dx = cube.x + cube.size/2 - ring.x;
+      const dy = cube.y + cube.size/2 - ring.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if (dist < ring.radius + cube.size/2) {
+        cubes.splice(i, 1);
+        score++;
+        document.getElementById('score').textContent = 'Score: ' + score;
+      } else if (cube.y > canvas.height) {
+        cubes.splice(i, 1); // missed
+      }
+    }
+
+    requestAnimationFrame(update);
+  }
+
+  update();
+
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    ring.x = touch.clientX;
+  }, { passive: false });
+
+  canvas.addEventListener('mousemove', e => {
+    ring.x = e.clientX;
+  });
+</script>
+</body>
+</html>

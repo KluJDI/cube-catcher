@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>3D CubeCatcher</title>
+  <title>Лови Мемы!</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+      background: linear-gradient(to bottom, #ff00cc, #3333ff);
       color: white;
-      font-family: 'Arial', sans-serif;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
       touch-action: manipulation;
       height: 100%;
     }
@@ -34,10 +34,11 @@
       transform: translateX(-50%);
       font-size: 28px;
       font-weight: bold;
-      text-shadow: 0 0 10px rgba(0,0,0,0.7);
+      text-shadow: 2px 2px 0 #000, -2px -2px 0 #000;
       background: rgba(0,0,0,0.5);
       padding: 10px 20px;
       border-radius: 20px;
+      border: 3px dashed yellow;
     }
     #start-screen, #game-over {
       position: absolute;
@@ -51,106 +52,133 @@
       align-items: center;
       background: rgba(0,0,0,0.7);
       z-index: 20;
+      text-align: center;
     }
     h1 {
       font-size: 3em;
       margin-bottom: 20px;
-      text-shadow: 0 0 10px rgba(255,255,255,0.5);
-      color: #ff8c00;
-      text-align: center;
+      text-shadow: 3px 3px 0 #ff00cc, -3px -3px 0 #00ccff;
+      color: #ffff00;
+      animation: rainbow 2s infinite;
+    }
+    @keyframes rainbow {
+      0% { color: #ff0000; }
+      14% { color: #ff7f00; }
+      28% { color: #ffff00; }
+      42% { color: #00ff00; }
+      57% { color: #0000ff; }
+      71% { color: #4b0082; }
+      85% { color: #9400d3; }
+      100% { color: #ff0000; }
     }
     button {
-      background: linear-gradient(to bottom, #ff8c00, #ff2d00);
+      background: linear-gradient(to bottom, #ff00cc, #00ccff);
       border: none;
       color: white;
       padding: 15px 30px;
-      font-size: 1.2em;
-      border-radius: 30px;
+      font-size: 1.5em;
+      border-radius: 50px;
       cursor: pointer;
       pointer-events: auto;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      transition: transform 0.2s, box-shadow 0.2s;
-      margin-top: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      transition: transform 0.3s, box-shadow 0.3s;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-top: 30px;
+      border: 3px solid white;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
     }
     button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
     }
     button:active {
-      transform: translateY(1px);
+      transform: scale(0.9) rotate(-5deg);
     }
     #game-over {
       display: none;
     }
     #final-score {
-      font-size: 2em;
-      margin: 20px 0;
+      font-size: 2.5em;
+      margin: 30px 0;
+      text-shadow: 2px 2px 0 #000;
+      color: #00ff00;
+      animation: bounce 0.5s infinite alternate;
     }
-    .particle {
-      position: absolute;
-      border-radius: 50%;
-      pointer-events: none;
+    @keyframes bounce {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
     }
     #instructions {
       max-width: 80%;
       text-align: center;
       margin-bottom: 30px;
-      line-height: 1.5;
+      line-height: 1.6;
+      font-size: 1.2em;
+      text-shadow: 1px 1px 0 #000;
+      color: #ffff00;
     }
     #high-score {
       position: absolute;
       top: 80px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 18px;
+      font-size: 1.5em;
       font-weight: bold;
-      text-shadow: 0 0 10px rgba(0,0,0,0.7);
+      text-shadow: 2px 2px 0 #000;
       background: rgba(0,0,0,0.5);
-      padding: 8px 16px;
+      padding: 10px 20px;
       border-radius: 15px;
+      border: 2px dotted white;
+    }
+    .meme-text {
+      position: absolute;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 2px 2px 0 #000;
+      pointer-events: none;
+      animation: float-up 3s forwards;
+    }
+    @keyframes float-up {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-100px); opacity: 0; }
     }
   </style>
 </head>
 <body>
 <div id="ui">
-  <div id="score">0</div>
-  <div id="high-score">High Score: 0</div>
+  <div id="score">0 МЕМОВ</div>
+  <div id="high-score">Рекорд: 0</div>
 </div>
 
 <div id="start-screen">
-  <h1>3D CubeCatcher</h1>
+  <h1>ЛОВИ МЕМЫ!</h1>
   <div id="instructions">
-    Catch the falling cubes with your basketball hoop!<br>
-    Move your finger or mouse to control the hoop.<br>
-    Bigger cubes are worth more points!
+    Лови падающие мемы ведром!<br>
+    Чем реже мем - тем больше очков!<br>
+    <span style="font-size: 0.8em;">(Просто двигай пальцем/мышкой)</span>
   </div>
-  <button id="start-btn">Start Game</button>
+  <button id="start-btn">ПОГНАЛИ!</button>
 </div>
 
 <div id="game-over">
-  <h1>Game Over</h1>
-  <div id="final-score">Score: 0</div>
-  <button id="restart-btn">Play Again</button>
+  <h1>КОНЕЦ ИГРЫ</h1>
+  <div id="final-score">Поймано: 0 мемов</div>
+  <button id="restart-btn">ЕЩЁ РАЗ!</button>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+<canvas id="gameCanvas"></canvas>
+
 <script>
   // Game elements
-  let scene, camera, renderer;
-  let score = 0;
-  let highScore = localStorage.getItem('highScore') || 0;
-  let gameRunning = false;
-  let animationFrameId;
-  let lastSpawnTime = 0;
-  
-  // Game objects
-  let ring, ringNet;
-  let cubes = [];
-  let particles = [];
-  let stars = [];
-  
-  // DOM elements
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
   const scoreElement = document.getElementById('score');
   const highScoreElement = document.getElementById('high-score');
   const startScreen = document.getElementById('start-screen');
@@ -159,402 +187,436 @@
   const startBtn = document.getElementById('start-btn');
   const restartBtn = document.getElementById('restart-btn');
   
-  // Initialize Three.js scene
-  function init() {
-    // Create scene
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f0c29);
-    
-    // Add fog for depth effect
-    scene.fog = new THREE.FogExp2(0x0f0c29, 0.002);
-    
-    // Create camera
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 300);
-    camera.lookAt(0, 0, 0);
-    
-    // Create renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.body.appendChild(renderer.domElement);
-    
-    // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0x404040);
-    scene.add(ambientLight);
-    
-    // Add directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(1, 1, 1);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    scene.add(directionalLight);
-    
-    // Add hemisphere light for natural lighting
-    const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.5);
-    scene.add(hemisphereLight);
-    
-    // Create basketball hoop
-    createBasketballHoop();
-    
-    // Create stars background
-    createStarfield();
-    
-    // Set initial high score display
-    highScoreElement.textContent = `High Score: ${highScore}`;
-    
-    // Handle window resize
-    window.addEventListener('resize', onWindowResize);
-    
-    // Handle controls
-    setupControls();
-  }
+  // Game state
+  let score = 0;
+  let highScore = localStorage.getItem('memeHighScore') || 0;
+  let gameRunning = false;
+  let animationFrameId;
+  let lastSpawnTime = 0;
   
-  function createBasketballHoop() {
-    // Backboard
-    const backboardGeometry = new THREE.BoxGeometry(120, 80, 5);
-    const backboardMaterial = new THREE.MeshPhongMaterial({ 
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.8
-    });
-    const backboard = new THREE.Mesh(backboardGeometry, backboardMaterial);
-    backboard.position.set(0, 100, -50);
-    backboard.castShadow = true;
-    scene.add(backboard);
-    
-    // Rim (outer)
-    const rimGeometry = new THREE.TorusGeometry(25, 3, 16, 32);
-    const rimMaterial = new THREE.MeshPhongMaterial({ color: 0xff5722 });
-    ring = new THREE.Mesh(rimGeometry, rimMaterial);
-    ring.position.set(0, 50, -50);
-    ring.rotation.x = Math.PI / 2;
-    ring.castShadow = true;
-    scene.add(ring);
-    
-    // Rim (inner)
-    const innerRimGeometry = new THREE.TorusGeometry(24, 1, 16, 32);
-    const innerRimMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
-    const innerRim = new THREE.Mesh(innerRimGeometry, innerRimMaterial);
-    innerRim.position.set(0, 50, -50);
-    innerRim.rotation.x = Math.PI / 2;
-    scene.add(innerRim);
-    
-    // Net
-    createNet();
-    
-    // Support pole
-    const poleGeometry = new THREE.CylinderGeometry(3, 3, 150, 16);
-    const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
-    const pole = new THREE.Mesh(poleGeometry, poleMaterial);
-    pole.position.set(0, -25, -50);
-    pole.castShadow = true;
-    scene.add(pole);
-  }
+  // Game objects
+  let bucket = { 
+    x: 200, 
+    y: 500, 
+    width: 100,
+    height: 80,
+    color: '#FF5722'
+  };
   
-  function createNet() {
-    const netMaterial = new THREE.MeshPhongMaterial({ 
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.6,
-      wireframe: true
-    });
-    
-    const netGeometry = new THREE.ConeGeometry(25, 60, 16, 8, true);
-    ringNet = new THREE.Mesh(netGeometry, netMaterial);
-    ringNet.position.set(0, 20, -50);
-    ringNet.rotation.x = Math.PI;
-    scene.add(ringNet);
-  }
+  let memes = [];
+  let memeImages = [];
+  let particles = [];
+  let floatingTexts = [];
   
-  function createStarfield() {
-    const starGeometry = new THREE.BufferGeometry();
-    const starMaterial = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 1,
-      transparent: true,
-      opacity: 0.8
-    });
-    
-    const starVertices = [];
-    for (let i = 0; i < 1000; i++) {
-      const x = (Math.random() - 0.5) * 2000;
-      const y = (Math.random() - 0.5) * 2000;
-      const z = (Math.random() - 0.5) * 2000;
-      starVertices.push(x, y, z);
-    }
-    
-    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-    const starField = new THREE.Points(starGeometry, starMaterial);
-    scene.add(starField);
-  }
+  // Meme types with different rarities
+  const memeTypes = [
+    { name: "Ждун", rarity: 1, points: 10 },
+    { name: "Кот-кричалка", rarity: 1, points: 10 },
+    { name: "Дождь из мужиков", rarity: 2, points: 20 },
+    { name: "Серьёзный кот", rarity: 2, points: 20 },
+    { name: "Троллфейс", rarity: 3, points: 30 },
+    { name: "Йода", rarity: 3, points: 30 },
+    { name: "Доге", rarity: 4, points: 50 },
+    { name: "Pepe", rarity: 5, points: 100 },
+    { name: "Harold", rarity: 5, points: 100 },
+    { name: "Упячка", rarity: 10, points: 200 }
+  ];
   
-  function spawnCube() {
-    const size = 10 + Math.random() * 20;
-    const colors = [
-      0xff5252, 0xffeb3b, 0x4caf50, 
-      0x2196f3, 0x9c27b0, 0xff9800,
-      0x00bcd4, 0xe91e63
+  // Load meme images
+  function loadMemeImages() {
+    const memeUrls = [
+      'https://i.imgur.com/3TXg5aJ.png', // Ждун
+      'https://i.imgur.com/y9FqU3T.png', // Кот-кричалка
+      'https://i.imgur.com/5Z3W5wZ.png', // Дождь из мужиков
+      'https://i.imgur.com/8Q3qZ9f.png', // Серьёзный кот
+      'https://i.imgur.com/7U7YJ7p.png', // Троллфейс
+      'https://i.imgur.com/9Q3qZ9f.png', // Йода
+      'https://i.imgur.com/1Q3qZ9f.png', // Doge
+      'https://i.imgur.com/2Q3qZ9f.png', // Pepe
+      'https://i.imgur.com/4Q3qZ9f.png', // Harold
+      'https://i.imgur.com/6Q3qZ9f.png'  // Упячка
     ];
-    const color = colors[Math.floor(Math.random() * colors.length)];
     
-    const geometry = new THREE.BoxGeometry(size, size, size);
-    const material = new THREE.MeshPhongMaterial({ 
-      color: color,
-      shininess: 100
+    memeUrls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+      memeImages.push(img);
     });
-    
-    const cube = new THREE.Mesh(geometry, material);
-    cube.castShadow = true;
-    cube.receiveShadow = true;
-    
-    // Set random position above the screen
-    cube.position.x = (Math.random() - 0.5) * 300;
-    cube.position.y = 200;
-    cube.position.z = (Math.random() - 0.5) * 100;
-    
-    // Set random rotation
-    cube.rotation.x = Math.random() * Math.PI;
-    cube.rotation.y = Math.random() * Math.PI;
-    
-    // Add physics properties
-    cube.userData = {
-      speed: 1 + Math.random() * 3,
-      rotationSpeed: {
-        x: (Math.random() - 0.5) * 0.05,
-        y: (Math.random() - 0.5) * 0.05,
-        z: (Math.random() - 0.5) * 0.05
-      },
-      points: Math.ceil(size / 5),
-      color: color
-    };
-    
-    scene.add(cube);
-    cubes.push(cube);
   }
   
-  function createParticles(position, color, count) {
-    const particleGeometry = new THREE.BufferGeometry();
-    const particleMaterial = new THREE.PointsMaterial({
-      color: color,
-      size: 3,
-      transparent: true,
-      opacity: 1,
-      blending: THREE.AdditiveBlending
-    });
+  // Resize canvas to fit window
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    bucket.y = canvas.height - 100;
+    bucket.x = canvas.width / 2 - bucket.width / 2;
+  }
+  
+  window.addEventListener('resize', resize);
+  resize();
+  
+  // Create a new meme with random properties
+  function spawnMeme() {
+    // Choose meme type based on rarity
+    let memeType;
+    const roll = Math.random() * 100;
     
-    const particlePositions = [];
-    const particleSizes = [];
-    const particleAlphas = [];
-    
-    for (let i = 0; i < count; i++) {
-      // Position
-      particlePositions.push(
-        position.x + (Math.random() - 0.5) * 20,
-        position.y + (Math.random() - 0.5) * 20,
-        position.z + (Math.random() - 0.5) * 20
-      );
-      
-      // Size
-      particleSizes.push(Math.random() * 4 + 1);
-      
-      // Alpha
-      particleAlphas.push(1);
+    if (roll < 40) {
+      memeType = memeTypes[0]; // Common
+    } else if (roll < 70) {
+      memeType = memeTypes[1]; // Common
+    } else if (roll < 85) {
+      memeType = memeTypes[2]; // Uncommon
+    } else if (roll < 95) {
+      memeType = memeTypes[3]; // Uncommon
+    } else if (roll < 98) {
+      memeType = memeTypes[4]; // Rare
+    } else {
+      memeType = memeTypes[Math.floor(Math.random() * memeTypes.length)]; // Very rare
     }
     
-    particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particlePositions, 3));
-    particleGeometry.setAttribute('size', new THREE.Float32BufferAttribute(particleSizes, 1));
-    particleGeometry.setAttribute('alpha', new THREE.Float32BufferAttribute(particleAlphas, 1));
+    const size = 50 + Math.random() * 50;
+    const memeIndex = memeTypes.findIndex(m => m.name === memeType.name);
     
-    const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-    particleSystem.userData = {
-      life: 60,
-      velocity: Array(count).fill().map(() => ({
-        x: (Math.random() - 0.5) * 3,
-        y: (Math.random() - 0.5) * 3,
-        z: (Math.random() - 0.5) * 3
-      }))
-    };
-    
-    scene.add(particleSystem);
-    particles.push(particleSystem);
+    memes.push({
+      x: Math.random() * (canvas.width - size),
+      y: -size,
+      width: size,
+      height: size,
+      speed: 2 + Math.random() * 3,
+      type: memeType,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.1,
+      wobble: Math.random() * 5,
+      wobbleSpeed: Math.random() * 0.1,
+      time: 0,
+      image: memeImages[memeIndex]
+    });
   }
   
+  // Create particles for effects
+  function createParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 5 + 2;
+      
+      particles.push({
+        x: x,
+        y: y,
+        size: Math.random() * 8 + 3,
+        color: color,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 30 + Math.random() * 30,
+        opacity: 1
+      });
+    }
+  }
+  
+  // Create floating text
+  function createFloatingText(text, x, y, color) {
+    floatingTexts.push({
+      text: text,
+      x: x,
+      y: y,
+      color: color,
+      life: 100
+    });
+  }
+  
+  // Draw the bucket
+  function drawBucket() {
+    // Bucket body
+    ctx.fillStyle = bucket.color;
+    ctx.beginPath();
+    ctx.moveTo(bucket.x, bucket.y);
+    ctx.lineTo(bucket.x + bucket.width, bucket.y);
+    ctx.lineTo(bucket.x + bucket.width - 20, bucket.y + bucket.height);
+    ctx.lineTo(bucket.x + 20, bucket.y + bucket.height);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Bucket rim
+    ctx.strokeStyle = '#FFC107';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    
+    // Bucket handle
+    ctx.beginPath();
+    ctx.moveTo(bucket.x + 20, bucket.y + 10);
+    ctx.quadraticCurveTo(
+      bucket.x + bucket.width / 2, 
+      bucket.y - 30, 
+      bucket.x + bucket.width - 20, 
+      bucket.y + 10
+    );
+    ctx.stroke();
+  }
+  
+  // Update and draw all game objects
   function update() {
     const now = Date.now();
     
-    // Spawn new cubes periodically
-    if (gameRunning && now - lastSpawnTime > 700 - Math.min(score, 500) / 2) {
-      spawnCube();
+    // Clear canvas with semi-transparent background for motion blur effect
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw background pattern
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    for (let i = 0; i < 50; i++) {
+      ctx.fillRect(
+        Math.random() * canvas.width,
+        Math.random() * canvas.height,
+        2, 2
+      );
+    }
+    
+    // Spawn new memes periodically
+    if (gameRunning && now - lastSpawnTime > 500 - Math.min(score, 500) / 3) {
+      spawnMeme();
       lastSpawnTime = now;
     }
     
-    // Update cubes
-    for (let i = cubes.length - 1; i >= 0; i--) {
-      const cube = cubes[i];
+    // Draw bucket
+    drawBucket();
+    
+    // Update and draw memes
+    for (let i = memes.length - 1; i >= 0; i--) {
+      const meme = memes[i];
       
-      // Update position
-      cube.position.y -= cube.userData.speed;
+      // Update meme position and rotation
+      meme.y += meme.speed;
+      meme.rotation += meme.rotationSpeed;
+      meme.time += 0.1;
+      meme.wobble = Math.sin(meme.time * meme.wobbleSpeed) * 5;
       
-      // Update rotation
-      cube.rotation.x += cube.userData.rotationSpeed.x;
-      cube.rotation.y += cube.userData.rotationSpeed.y;
-      cube.rotation.z += cube.userData.rotationSpeed.z;
+      // Draw meme with rotation and wobble
+      ctx.save();
+      ctx.translate(meme.x + meme.width/2, meme.y + meme.height/2);
+      ctx.rotate(meme.rotation);
       
-      // Check collision with ring
-      const distance = cube.position.distanceTo(new THREE.Vector3(ring.position.x, ring.position.y, ring.position.z));
+      // Draw meme image if loaded, otherwise placeholder
+      if (meme.image && meme.image.complete) {
+        ctx.drawImage(
+          meme.image, 
+          -meme.width/2 + meme.wobble, 
+          -meme.height/2, 
+          meme.width, 
+          meme.height
+        );
+      } else {
+        // Placeholder if image not loaded
+        ctx.fillStyle = getRandomColor();
+        ctx.fillRect(
+          -meme.width/2 + meme.wobble, 
+          -meme.height/2, 
+          meme.width, 
+          meme.height
+        );
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+          -meme.width/2 + meme.wobble, 
+          -meme.height/2, 
+          meme.width, 
+          meme.height
+        );
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText(
+          meme.type.name, 
+          -meme.width/2 + meme.wobble + 5, 
+          -meme.height/2 + 15
+        );
+      }
       
-      if (distance < 30 && cube.position.y < ring.position.y + 10) {
-        // Cube caught!
-        createParticles(cube.position, cube.userData.color, 30);
-        scene.remove(cube);
-        cubes.splice(i, 1);
+      ctx.restore();
+      
+      // Check collision with bucket
+      if (
+        meme.y + meme.height > bucket.y &&
+        meme.x + meme.width > bucket.x &&
+        meme.x < bucket.x + bucket.width &&
+        meme.y + meme.height < bucket.y + bucket.height
+      ) {
+        // Meme caught!
+        createParticles(
+          meme.x + meme.width/2, 
+          meme.y + meme.height/2, 
+          getRandomColor(), 
+          20
+        );
         
-        score += cube.userData.points;
-        scoreElement.textContent = score;
+        createFloatingText(
+          `+${meme.type.points} ${meme.type.name.toUpperCase()}!`,
+          meme.x + meme.width/2,
+          meme.y,
+          getRandomColor()
+        );
+        
+        memes.splice(i, 1);
+        score += meme.type.points;
+        scoreElement.textContent = `${score} МЕМОВ`;
         
         // Animate score
-        scoreElement.style.transform = 'translateX(-50%) scale(1.2)';
+        scoreElement.style.transform = 'translateX(-50%) scale(1.3) rotate(5deg)';
         setTimeout(() => {
-          scoreElement.style.transform = 'translateX(-50%) scale(1)';
+          scoreElement.style.transform = 'translateX(-50%) scale(1) rotate(0)';
         }, 200);
-      } else if (cube.position.y < -200) {
-        // Cube missed - game over
-        scene.remove(cube);
-        cubes.splice(i, 1);
-        if (gameRunning) {
+        
+        // Play sound
+        playRandomSound();
+      } else if (meme.y > canvas.height + meme.height) {
+        // Meme missed
+        memes.splice(i, 1);
+        if (gameRunning && memes.length === 0 && score > 0) {
+          // Only game over if you've scored at least once
           gameOver();
         }
       }
     }
     
-    // Update particles
+    // Update and draw particles
     for (let i = particles.length - 1; i >= 0; i--) {
-      const particleSystem = particles[i];
-      const positions = particleSystem.geometry.attributes.position.array;
-      const alphas = particleSystem.geometry.attributes.alpha.array;
-      const velocities = particleSystem.userData.velocity;
+      const p = particles[i];
       
-      // Update each particle
-      for (let j = 0; j < positions.length; j += 3) {
-        positions[j] += velocities[j/3].x;
-        positions[j+1] += velocities[j/3].y;
-        positions[j+2] += velocities[j/3].z;
-        
-        // Apply gravity
-        velocities[j/3].y -= 0.05;
-        
-        // Fade out
-        alphas[j/3] = particleSystem.userData.life / 60;
-      }
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.2; // gravity
+      p.life--;
+      p.opacity = p.life / 60;
       
-      particleSystem.geometry.attributes.position.needsUpdate = true;
-      particleSystem.geometry.attributes.alpha.needsUpdate = true;
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
       
-      particleSystem.userData.life--;
-      
-      if (particleSystem.userData.life <= 0) {
-        scene.remove(particleSystem);
+      if (p.life <= 0) {
         particles.splice(i, 1);
       }
     }
+    ctx.globalAlpha = 1;
     
-    // Animate net slightly
-    if (ringNet) {
-      ringNet.rotation.z = Math.sin(Date.now() * 0.005) * 0.1;
+    // Update and draw floating texts
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+      const text = floatingTexts[i];
+      
+      ctx.font = 'bold 24px Comic Sans MS';
+      ctx.fillStyle = text.color;
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.strokeText(text.text, text.x, text.y);
+      ctx.fillText(text.text, text.x, text.y);
+      
+      text.y -= 2;
+      text.life--;
+      
+      if (text.life <= 0) {
+        floatingTexts.splice(i, 1);
+      }
     }
-    
-    // Render scene
-    renderer.render(scene, camera);
     
     if (gameRunning) {
       animationFrameId = requestAnimationFrame(update);
     }
   }
   
-  function setupControls() {
-    // Mouse/touch controls for moving the ring
-    let targetX = 0;
-    
-    function handleMove(clientX) {
-      if (!gameRunning) return;
-      
-      // Convert screen coordinates to world coordinates
-      const x = (clientX / window.innerWidth) * 2 - 1;
-      targetX = x * 150; // Scale to world coordinates
-    }
-    
-    // Smooth movement
-    function smoothMove() {
-      if (ring) {
-        ring.position.x += (targetX - ring.position.x) * 0.1;
-        ringNet.position.x = ring.position.x;
-      }
-      requestAnimationFrame(smoothMove);
-    }
-    smoothMove();
-    
-    // Event listeners
-    renderer.domElement.addEventListener('mousemove', (e) => {
-      handleMove(e.clientX);
-    });
-    
-    renderer.domElement.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      handleMove(e.touches[0].clientX);
-    }, { passive: false });
+  // Helper function for random colors
+  function getRandomColor() {
+    const colors = [
+      '#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', 
+      '#9C27B0', '#FF9800', '#00BCD4', '#E91E63',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF5722'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
   }
   
-  function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  // Play random sound effect
+  function playRandomSound() {
+    const sounds = [
+      'https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3',
+      'https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3',
+      'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3',
+      'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'
+    ];
+    
+    const sound = new Audio(sounds[Math.floor(Math.random() * sounds.length)]);
+    sound.volume = 0.3;
+    sound.play().catch(e => console.log("Sound playback error:", e));
   }
   
+  // Start the game
   function startGame() {
-    // Reset score
     score = 0;
-    scoreElement.textContent = score;
-    
-    // Clear existing cubes and particles
-    cubes.forEach(cube => scene.remove(cube));
-    cubes = [];
-    particles.forEach(particle => scene.remove(particle));
+    scoreElement.textContent = `${score} МЕМОВ`;
+    memes = [];
     particles = [];
-    
-    // Reset game state
+    floatingTexts = [];
     gameRunning = true;
     startScreen.style.display = 'none';
     gameOverScreen.style.display = 'none';
     lastSpawnTime = Date.now();
     
-    // Start game loop
+    // Start with 3 memes
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => spawnMeme(), i * 500);
+    }
+    
     update();
   }
   
+  // End the game
   function gameOver() {
     gameRunning = false;
-    finalScoreElement.textContent = `Score: ${score}`;
+    finalScoreElement.textContent = `Поймано: ${score} мемов`;
     gameOverScreen.style.display = 'flex';
     
     // Update high score
     if (score > highScore) {
       highScore = score;
-      localStorage.setItem('highScore', highScore);
-      highScoreElement.textContent = `High Score: ${highScore}`;
+      localStorage.setItem('memeHighScore', highScore);
+      highScoreElement.textContent = `Рекорд: ${highScore}`;
+      
+      // Special effect for new high score
+      finalScoreElement.textContent = `НОВЫЙ РЕКОРД: ${highScore}!`;
+      finalScoreElement.style.animation = 'rainbow 0.5s infinite';
     }
     
     cancelAnimationFrame(animationFrameId);
   }
   
-  // Event listeners for buttons
+  // Event listeners
   startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', startGame);
   
-  // Initialize the game
-  init();
+  // Touch and mouse controls
+  function handleMove(x) {
+    if (!gameRunning) return;
+    
+    // Smooth movement with boundaries
+    const targetX = Math.max(
+      bucket.width/2, 
+      Math.min(x - bucket.width/2, canvas.width - bucket.width/2)
+    );
+    bucket.x += (targetX - bucket.x) * 0.2;
+  }
+  
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleMove(touch.clientX);
+  }, { passive: false });
+  
+  canvas.addEventListener('mousemove', e => {
+    handleMove(e.clientX);
+  });
+  
+  // Load meme images when page loads
+  loadMemeImages();
+  
+  // Resize canvas initially
+  resize();
   
   // For Telegram Mini App integration
   if (window.Telegram && window.Telegram.WebApp) {
@@ -562,7 +624,7 @@
     Telegram.WebApp.expand();
     
     // Change background color to match Telegram theme
-    document.body.style.background = Telegram.WebApp.themeParams.bg_color || 'linear-gradient(to bottom, #0f0c29, #302b63, #24243e)';
+    document.body.style.background = Telegram.WebApp.themeParams.bg_color || 'linear-gradient(to bottom, #ff00cc, #3333ff)';
     
     // Adjust text color based on theme
     const textColor = Telegram.WebApp.themeParams.text_color || 'white';

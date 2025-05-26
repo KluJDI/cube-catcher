@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Лови Мемы!</title>
+  <title>Лови Мемы с Бомбами!</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     html, body {
@@ -39,6 +39,18 @@
       padding: 10px 20px;
       border-radius: 20px;
       border: 3px dashed yellow;
+    }
+    #lives {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 2px 2px 0 #000;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 3px solid red;
     }
     #start-screen, #game-over {
       position: absolute;
@@ -149,11 +161,25 @@
       0% { transform: translateY(0); opacity: 1; }
       100% { transform: translateY(-100px); opacity: 0; }
     }
+    .explosion {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(255,100,0,0.8) 0%, rgba(255,0,0,0) 70%);
+      border-radius: 50%;
+      transform: scale(0);
+      animation: explode 0.5s forwards;
+    }
+    @keyframes explode {
+      to { transform: scale(3); opacity: 0; }
+    }
   </style>
 </head>
 <body>
 <div id="ui">
   <div id="score">0 МЕМОВ</div>
+  <div id="lives">❤️❤️❤️</div>
   <div id="high-score">Рекорд: 0</div>
 </div>
 
@@ -161,6 +187,7 @@
   <h1>ЛОВИ МЕМЫ!</h1>
   <div id="instructions">
     Лови падающие мемы ведром!<br>
+    Избегай бомб - они отнимают жизни!<br>
     Чем реже мем - тем больше очков!<br>
     <span style="font-size: 0.8em;">(Просто двигай пальцем/мышкой)</span>
   </div>
@@ -180,6 +207,7 @@
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   const scoreElement = document.getElementById('score');
+  const livesElement = document.getElementById('lives');
   const highScoreElement = document.getElementById('high-score');
   const startScreen = document.getElementById('start-screen');
   const gameOverScreen = document.getElementById('game-over');
@@ -189,6 +217,7 @@
   
   // Game state
   let score = 0;
+  let lives = 3;
   let highScore = localStorage.getItem('memeHighScore') || 0;
   let gameRunning = false;
   let animationFrameId;
@@ -204,7 +233,9 @@
   };
   
   let memes = [];
+  let bombs = [];
   let memeImages = [];
+  let bombImage = new Image();
   let particles = [];
   let floatingTexts = [];
   
@@ -222,10 +253,11 @@
     { name: "Упячка", rarity: 10, points: 200 }
   ];
   
-  // Load meme images
-  function loadMemeImages() {
+  // Load images
+  function loadImages() {
+    // Meme images
     const memeUrls = [
-      'https://steamuserimages-a.akamaihd.net/ugc/90472493367987320/2F4D0894F18F0C96AA64DA536DB0445FF62DB709/?imw=512&amp;imh=685&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true', // Ждун
+      'https://i.imgur.com/3TXg5aJ.png', // Ждун
       'https://i.imgur.com/y9FqU3T.png', // Кот-кричалка
       'https://i.imgur.com/5Z3W5wZ.png', // Дождь из мужиков
       'https://i.imgur.com/8Q3qZ9f.png', // Серьёзный кот
@@ -242,6 +274,9 @@
       img.src = url;
       memeImages.push(img);
     });
+    
+    // Bomb image
+    bombImage.src = 'https://i.imgur.com/9FqU3Tb.png';
   }
   
   // Resize canvas to fit window
@@ -257,6 +292,12 @@
   
   // Create a new meme with random properties
   function spawnMeme() {
+    // 20% chance to spawn bomb instead of meme
+    if (Math.random() < 0.2) {
+      spawnBomb();
+      return;
+    }
+    
     // Choose meme type based on rarity
     let memeType;
     const roll = Math.random() * 100;
@@ -290,7 +331,26 @@
       wobble: Math.random() * 5,
       wobbleSpeed: Math.random() * 0.1,
       time: 0,
-      image: memeImages[memeIndex]
+      image: memeImages[memeIndex],
+      isBomb: false
+    });
+  }
+  
+  // Create a bomb
+  function spawnBomb() {
+    const size = 60;
+    
+    bombs.push({
+      x: Math.random() * (canvas.width - size),
+      y: -size,
+      width: size,
+      height: size,
+      speed: 3 + Math.random() * 2,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.2,
+      time: 0,
+      image: bombImage,
+      isBomb: true
     });
   }
   
@@ -311,6 +371,23 @@
         opacity: 1
       });
     }
+  }
+  
+  // Create explosion effect
+  function createExplosion(x, y) {
+    const explosion = document.createElement('div');
+    explosion.className = 'explosion';
+    explosion.style.left = `${x - 50}px`;
+    explosion.style.top = `${y - 50}px`;
+    document.body.appendChild(explosion);
+    
+    // Remove after animation
+    setTimeout(() => {
+      explosion.remove();
+    }, 500);
+    
+    // Play explosion sound
+    playSound('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3');
   }
   
   // Create floating text
@@ -371,7 +448,7 @@
       );
     }
     
-    // Spawn new memes periodically
+    // Spawn new objects periodically
     if (gameRunning && now - lastSpawnTime > 500 - Math.min(score, 500) / 3) {
       spawnMeme();
       lastSpawnTime = now;
@@ -384,18 +461,17 @@
     for (let i = memes.length - 1; i >= 0; i--) {
       const meme = memes[i];
       
-      // Update meme position and rotation
+      // Update position and rotation
       meme.y += meme.speed;
       meme.rotation += meme.rotationSpeed;
       meme.time += 0.1;
       meme.wobble = Math.sin(meme.time * meme.wobbleSpeed) * 5;
       
-      // Draw meme with rotation and wobble
+      // Draw with rotation and wobble
       ctx.save();
       ctx.translate(meme.x + meme.width/2, meme.y + meme.height/2);
       ctx.rotate(meme.rotation);
       
-      // Draw meme image if loaded, otherwise placeholder
       if (meme.image && meme.image.complete) {
         ctx.drawImage(
           meme.image, 
@@ -405,7 +481,7 @@
           meme.height
         );
       } else {
-        // Placeholder if image not loaded
+        // Placeholder
         ctx.fillStyle = getRandomColor();
         ctx.fillRect(
           -meme.width/2 + meme.wobble, 
@@ -465,14 +541,79 @@
         }, 200);
         
         // Play sound
-        playRandomSound();
+        playSound('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3');
       } else if (meme.y > canvas.height + meme.height) {
         // Meme missed
         memes.splice(i, 1);
-        if (gameRunning && memes.length === 0 && score > 0) {
-          // Only game over if you've scored at least once
+      }
+    }
+    
+    // Update and draw bombs
+    for (let i = bombs.length - 1; i >= 0; i--) {
+      const bomb = bombs[i];
+      
+      // Update position and rotation
+      bomb.y += bomb.speed;
+      bomb.rotation += bomb.rotationSpeed;
+      bomb.time += 0.1;
+      
+      // Draw with rotation
+      ctx.save();
+      ctx.translate(bomb.x + bomb.width/2, bomb.y + bomb.height/2);
+      ctx.rotate(bomb.rotation);
+      
+      if (bomb.image && bomb.image.complete) {
+        ctx.drawImage(
+          bomb.image, 
+          -bomb.width/2, 
+          -bomb.height/2, 
+          bomb.width, 
+          bomb.height
+        );
+      } else {
+        // Placeholder
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(0, 0, bomb.width/2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText('БОМБА', -20, 5);
+      }
+      
+      ctx.restore();
+      
+      // Check collision with bucket
+      if (
+        bomb.y + bomb.height > bucket.y &&
+        bomb.x + bomb.width > bucket.x &&
+        bomb.x < bucket.x + bucket.width &&
+        bomb.y + bomb.height < bucket.y + bucket.height
+      ) {
+        // Bomb caught - lose life!
+        createExplosion(bomb.x + bomb.width/2, bomb.y + bomb.height/2);
+        bombs.splice(i, 1);
+        lives--;
+        updateLivesDisplay();
+        
+        if (lives <= 0) {
           gameOver();
+        } else {
+          // Shake screen on hit
+          document.body.style.animation = 'shake 0.5s';
+          setTimeout(() => {
+            document.body.style.animation = '';
+          }, 500);
+          
+          // Play explosion sound
+          playSound('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3');
         }
+      } else if (bomb.y > canvas.height + bomb.height) {
+        // Bomb missed
+        bombs.splice(i, 1);
       }
     }
     
@@ -522,6 +663,19 @@
     }
   }
   
+  // Update lives display
+  function updateLivesDisplay() {
+    livesElement.textContent = '❤️'.repeat(lives) + '♡'.repeat(3 - lives);
+    
+    // Pulse effect when losing life
+    livesElement.style.transform = 'scale(1.5)';
+    livesElement.style.color = 'red';
+    setTimeout(() => {
+      livesElement.style.transform = 'scale(1)';
+      livesElement.style.color = '';
+    }, 300);
+  }
+  
   // Helper function for random colors
   function getRandomColor() {
     const colors = [
@@ -532,16 +686,9 @@
     return colors[Math.floor(Math.random() * colors.length)];
   }
   
-  // Play random sound effect
-  function playRandomSound() {
-    const sounds = [
-      'https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3',
-      'https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3',
-      'https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3',
-      'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'
-    ];
-    
-    const sound = new Audio(sounds[Math.floor(Math.random() * sounds.length)]);
+  // Play sound effect
+  function playSound(url) {
+    const sound = new Audio(url);
     sound.volume = 0.3;
     sound.play().catch(e => console.log("Sound playback error:", e));
   }
@@ -549,8 +696,11 @@
   // Start the game
   function startGame() {
     score = 0;
+    lives = 3;
     scoreElement.textContent = `${score} МЕМОВ`;
+    updateLivesDisplay();
     memes = [];
+    bombs = [];
     particles = [];
     floatingTexts = [];
     gameRunning = true;
@@ -581,6 +731,7 @@
       // Special effect for new high score
       finalScoreElement.textContent = `НОВЫЙ РЕКОРД: ${highScore}!`;
       finalScoreElement.style.animation = 'rainbow 0.5s infinite';
+      playSound('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3');
     }
     
     cancelAnimationFrame(animationFrameId);
@@ -612,11 +763,30 @@
     handleMove(e.clientX);
   });
   
-  // Load meme images when page loads
-  loadMemeImages();
+  // Load images when page loads
+  loadImages();
   
   // Resize canvas initially
   resize();
+  
+  // Add shake animation to styles
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      10% { transform: translate(-1px, -2px) rotate(-1deg); }
+      20% { transform: translate(-3px, 0px) rotate(1deg); }
+      30% { transform: translate(3px, 2px) rotate(0deg); }
+      40% { transform: translate(1px, -1px) rotate(1deg); }
+      50% { transform: translate(-1px, 2px) rotate(-1deg); }
+      60% { transform: translate(-3px, 1px) rotate(0deg); }
+      70% { transform: translate(3px, 1px) rotate(-1deg); }
+      80% { transform: translate(-1px, -1px) rotate(1deg); }
+      90% { transform: translate(1px, 2px) rotate(0deg); }
+      100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+  `;
+  document.head.appendChild(style);
   
   // For Telegram Mini App integration
   if (window.Telegram && window.Telegram.WebApp) {

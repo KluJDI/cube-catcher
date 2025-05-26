@@ -176,6 +176,14 @@
     @keyframes explode {
       to { transform: scale(3); opacity: 0; }
     }
+
+    #music-toggle {
+  transition: all 0.3s ease;
+}
+#music-toggle:hover {
+  transform: scale(1.1);
+  background: rgba(0,0,0,0.7) !important;
+}
   </style>
 </head>
 <body>
@@ -224,6 +232,44 @@
   let gameRunning = false;
   let animationFrameId;
   let lastSpawnTime = 0;
+
+  // ===== ДОБАВЬТЕ ЭТО ПРЯМО ЗДЕСЬ =====
+  // Фоновая музыка
+  const backgroundMusic = new Audio('sounds/background-music.mp3');
+  backgroundMusic.loop = true;
+  backgroundMusic.volume = 0.3;
+  let isMusicPlaying = false;
+
+  // Кнопка управления музыкой
+  const musicToggle = document.createElement('button');
+  musicToggle.id = 'music-toggle';
+  musicToggle.innerHTML = '🔇';
+  musicToggle.style.position = 'absolute';
+  musicToggle.style.bottom = '20px';
+  musicToggle.style.right = '20px';
+  musicToggle.style.zIndex = '30';
+  musicToggle.style.fontSize = '24px';
+  musicToggle.style.background = 'rgba(0,0,0,0.5)';
+  musicToggle.style.border = '2px solid white';
+  musicToggle.style.borderRadius = '50%';
+  musicToggle.style.width = '50px';
+  musicToggle.style.height = '50px';
+  musicToggle.style.cursor = 'pointer';
+  document.body.appendChild(musicToggle);
+
+  // Обработчик клика для музыки
+  musicToggle.addEventListener('click', () => {
+    isMusicPlaying = !isMusicPlaying;
+    if (isMusicPlaying) {
+      backgroundMusic.play().catch(e => console.log("Music error:", e));
+      musicToggle.innerHTML = '🔊';
+    } else {
+      backgroundMusic.pause();
+      musicToggle.innerHTML = '🔇';
+    }
+    localStorage.setItem('musicState', isMusicPlaying);
+  });
+  // ===== КОНЕЦ ДОБАВЛЕНИЯ =====
   
   // Game objects
   let bucket = { 
@@ -715,6 +761,13 @@
     
     update();
   }
+
+  // Автовоспроизведение музыки при старте игры
+    if (localStorage.getItem('musicState') !== 'false') {
+      isMusicPlaying = true;
+      backgroundMusic.play().catch(e => console.log("Music error:", e));
+      musicToggle.innerHTML = '🔊';
+    }
   
   // End the game
   function gameOver() {

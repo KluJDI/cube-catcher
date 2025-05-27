@@ -3,27 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Кликер Босса</title>
+  <title>Кликер Крипера Наруто</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
       margin: 0;
-      background: url('https://wallpaperaccess.com/full/1636910.jpg') no-repeat center center fixed;
+      background: url('https://i.imgur.com/OYVpe2W.jpg') no-repeat center center fixed;
       background-size: cover;
       color: #fff;
       text-align: center;
     }
-    #boss-img {
+    #boss-img img {
       width: 200px;
-      margin: 20px auto;
+      border: 5px dashed yellow;
+      border-radius: 20px;
+      background: rgba(0,0,0,0.3);
     }
     button {
-      font-size: 1.5em;
+      font-size: 1.2em;
       padding: 10px 20px;
       margin: 10px;
+      border: 2px solid white;
+      border-radius: 10px;
+      background: purple;
+      color: white;
     }
     #shop, #stats {
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.6);
       padding: 10px;
       margin: 10px;
       border-radius: 10px;
@@ -37,50 +43,67 @@
     }
     .progress {
       height: 100%;
-      background: limegreen;
+      background: lime;
       border-radius: 10px;
       width: 0%;
+      transition: width 0.3s;
     }
   </style>
 </head>
 <body>
-  <h1>Крипер Наруто</h1>
-  <div id="boss-img"><img src="creeper_naruto.png" alt="Босс" width="200"></div>
+  <audio autoplay loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+  <h1>🧨 Кликер Крипера Наруто 🌀</h1>
+  <div id="boss-img"><img id="bossImage" src="https://i.imgur.com/vcNpEXI.png" alt="Босс"></div>
   <div class="bar"><div id="progress" class="progress"></div></div>
-  <button onclick="clickBoss()">Лайк</button>
+  <button onclick="clickBoss()">🔥 Лайкнуть Босса</button>
 
   <div id="shop">
-    <h2>Магазин</h2>
-    <button onclick="buyUpgrade('clickPower')">СуперКлик (+1 лайк за нажатие) — 50 👍</button><br>
-    <button onclick="buyUpgrade('autoClick')">Подписка (+1 лайк/сек) — 100 👍</button>
+    <h2>🛒 Магазин</h2>
+    <button onclick="buyUpgrade('clickPower')">💥 СуперКлик (+1/клик) — 50 👍</button><br>
+    <button onclick="buyUpgrade('autoClick')">📺 Подписка (+1/сек) — 100 👍</button><br>
+    <button onclick="buyUpgrade('megaClick')">⚡️ МегаКлик (+5/клик) — 250 👍</button>
   </div>
 
   <div id="stats">
-    <h2>Статистика</h2>
-    <p>Лайков: <span id="likes">0</span></p>
-    <p>Уровень: <span id="level">1</span></p>
+    <h2>📊 Статистика</h2>
+    <p>👍 Лайков: <span id="likes">0</span></p>
+    <p>🎮 Уровень: <span id="level">1</span></p>
   </div>
 
   <script>
+    const bossImages = [
+      'https://i.imgur.com/vcNpEXI.png',
+      'https://i.imgur.com/YcHixMb.png',
+      'https://i.imgur.com/U7swfK0.png',
+      'https://i.imgur.com/tn5ZDqd.png'
+    ];
+
     let state = JSON.parse(localStorage.getItem('clickerState')) || {
       likes: 0,
       clickPower: 1,
       autoClick: 0,
+      megaClick: 0,
       progress: 0,
       level: 1
     };
 
     const progressEl = document.getElementById('progress');
+    const bossImageEl = document.getElementById('bossImage');
 
     function updateUI() {
       document.getElementById('likes').textContent = state.likes;
       document.getElementById('level').textContent = state.level;
       progressEl.style.width = state.progress + '%';
+      bossImageEl.src = bossImages[(state.level - 1) % bossImages.length];
     }
 
     function clickBoss() {
-      state.likes += state.clickPower;
-      state.progress += state.clickPower;
+      let power = state.clickPower + (state.megaClick * 5);
+      state.likes += power;
+      state.progress += power;
       if (state.progress >= 100) {
         state.progress = 0;
         state.level++;
@@ -96,6 +119,9 @@
       } else if (type === 'autoClick' && state.likes >= 100) {
         state.likes -= 100;
         state.autoClick++;
+      } else if (type === 'megaClick' && state.likes >= 250) {
+        state.likes -= 250;
+        state.megaClick++;
       }
       saveState();
       updateUI();

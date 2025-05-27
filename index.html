@@ -198,24 +198,26 @@
     }
     #leaderboard {
       position: absolute;
-      top: 120px;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
       border-radius: 15px;
-      padding: 15px;
-      width: 80%;
+      padding: 20px;
+      width: 90%;
       max-width: 400px;
-      max-height: 300px;
+      max-height: 80vh;
       overflow-y: auto;
       display: none;
       z-index: 25;
       border: 2px solid #ff00cc;
+      box-shadow: 0 0 20px rgba(255,0,204,0.5);
     }
     #leaderboard h2 {
       color: #ffff00;
       text-align: center;
       margin-top: 0;
+      margin-bottom: 15px;
     }
     #leaderboard table {
       width: 100%;
@@ -228,9 +230,31 @@
     }
     #leaderboard th {
       color: #00ccff;
+      font-size: 1.1em;
     }
     #leaderboard tr:nth-child(even) {
       background: rgba(255,255,255,0.1);
+    }
+    #leaderboard tr:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    #close-leaderboard {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 5px;
+    }
+    .tg-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 10px;
+      vertical-align: middle;
     }
     #leaderboard-btn {
       position: absolute;
@@ -248,13 +272,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.3s;
     }
-    .tg-avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      margin-right: 10px;
-      vertical-align: middle;
+    #leaderboard-btn:hover {
+      transform: scale(1.1);
+      background: rgba(0,0,0,0.7);
     }
   </style>
 </head>
@@ -267,6 +289,7 @@
 
 <button id="leaderboard-btn">🏆</button>
 <div id="leaderboard">
+  <button id="close-leaderboard">×</button>
   <h2>Таблица лидеров</h2>
   <table id="leaderboard-table">
     <thead>
@@ -315,7 +338,7 @@
   // Game state
   let score = 0;
   let lives = 3;
-  let highScore = localStorage.getItem('memeHighScore') || 0;
+  let highScore = parseInt(localStorage.getItem('memeHighScore')) || 0;
   let gameRunning = false;
   let animationFrameId;
   let lastSpawnTime = 0;
@@ -323,11 +346,12 @@
   // Leaderboard
   let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
   const leaderboardBtn = document.getElementById('leaderboard-btn');
-  const leaderboardTable = document.getElementById('leaderboard-table');
+  const leaderboardTable = document.getElementById('leaderboard-table').querySelector('tbody');
   const leaderboardElement = document.getElementById('leaderboard');
+  const closeLeaderboardBtn = document.getElementById('close-leaderboard');
 
   // Music
-  const backgroundMusic = new Audio('sounds/background-music.mp3');
+  const backgroundMusic = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
   backgroundMusic.loop = true;
   backgroundMusic.volume = 0.3;
   let isMusicPlaying = false;
@@ -353,14 +377,6 @@
   let bombImage = new Image();
   let particles = [];
   let floatingTexts = [];
-  
-  // Sounds
-  const sounds = {
-    catch: new Audio('sounds/catch.mp3'),
-    bomb: new Audio('sounds/bomb.mp3'),
-    gameOver: new Audio('sounds/gameover.mp3'),
-    highScore: new Audio('sounds/highscore.mp3')
-  };
   
   // Meme types with different rarities
   const memeTypes = [
@@ -410,74 +426,84 @@
   
   // Update leaderboard
   function updateLeaderboard() {
-    leaderboard.sort((a, b) => b.score - a.score);
-    if (leaderboard.length > 10) {
-      leaderboard = leaderboard.slice(0, 10);
-    }
-    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-    
-    const tbody = leaderboardTable.querySelector('tbody');
-    tbody.innerHTML = '';
-    
-    leaderboard.forEach((player, index) => {
-      const row = document.createElement('tr');
-      
-      const rankCell = document.createElement('td');
-      rankCell.textContent = index + 1;
-      
-      const nameCell = document.createElement('td');
-      if (player.photo) {
-        const img = document.createElement('img');
-        img.src = player.photo;
-        img.className = 'tg-avatar';
-        nameCell.appendChild(img);
+    try {
+      leaderboard.sort((a, b) => b.score - a.score);
+      if (leaderboard.length > 10) {
+        leaderboard = leaderboard.slice(0, 10);
       }
-      nameCell.appendChild(document.createTextNode(player.name || 'Аноним'));
       
-      const scoreCell = document.createElement('td');
-      scoreCell.textContent = player.score;
+      localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
       
-      row.appendChild(rankCell);
-      row.appendChild(nameCell);
-      row.appendChild(scoreCell);
-      tbody.appendChild(row);
-    });
+      leaderboardTable.innerHTML = '';
+      
+      leaderboard.forEach((player, index) => {
+        const row = document.createElement('tr');
+        
+        const rankCell = document.createElement('td');
+        rankCell.textContent = index + 1;
+        
+        const nameCell = document.createElement('td');
+        if (player.photo) {
+          const img = document.createElement('img');
+          img.src = player.photo;
+          img.className = 'tg-avatar';
+          nameCell.appendChild(img);
+        }
+        nameCell.appendChild(document.createTextNode(player.name || 'Аноним'));
+        
+        const scoreCell = document.createElement('td');
+        scoreCell.textContent = player.score;
+        
+        row.appendChild(rankCell);
+        row.appendChild(nameCell);
+        row.appendChild(scoreCell);
+        leaderboardTable.appendChild(row);
+      });
+    } catch (e) {
+      console.error("Error updating leaderboard:", e);
+    }
   }
   
   // Add player to leaderboard
   function addToLeaderboard(score) {
-    let userData = {};
-    
-    if (window.Telegram && window.Telegram.WebApp) {
-      const tgUser = Telegram.WebApp.initDataUnsafe.user;
-      userData = {
-        id: tgUser.id,
-        name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username,
-        photo: tgUser.photo_url,
-        score: score
-      };
-    } else {
-      const userName = prompt('Поздравляем с новым рекордом! Введите ваше имя:', 'Аноним');
-      if (userName === null) return;
+    try {
+      let userData = {};
       
-      userData = {
-        id: Date.now(),
-        name: userName,
-        score: score
-      };
-    }
-    
-    const existingPlayerIndex = leaderboard.findIndex(p => p.id === userData.id);
-    
-    if (existingPlayerIndex !== -1) {
-      if (score > leaderboard[existingPlayerIndex].score) {
-        leaderboard[existingPlayerIndex].score = score;
+      // Проверяем доступность Telegram WebApp API
+      if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
+        const tgUser = Telegram.WebApp.initDataUnsafe.user;
+        userData = {
+          id: tgUser.id,
+          name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username || 'Аноним',
+          photo: tgUser.photo_url,
+          score: score
+        };
+      } else {
+        // Для тестирования вне Telegram
+        const userName = prompt('Поздравляем с новым рекордом! Введите ваше имя:', 'Аноним');
+        if (userName === null) return;
+        
+        userData = {
+          id: Date.now(),
+          name: userName,
+          score: score
+        };
       }
-    } else {
-      leaderboard.push(userData);
+      
+      const existingPlayerIndex = leaderboard.findIndex(p => p.id === userData.id);
+      
+      if (existingPlayerIndex !== -1) {
+        if (score > leaderboard[existingPlayerIndex].score) {
+          leaderboard[existingPlayerIndex].score = score;
+        }
+      } else {
+        leaderboard.push(userData);
+      }
+      
+      updateLeaderboard();
+    } catch (e) {
+      console.error("Error adding to leaderboard:", e);
     }
-    
-    updateLeaderboard();
   }
   
   // Spawn meme
@@ -572,8 +598,6 @@
     setTimeout(() => {
       explosion.remove();
     }, 500);
-    
-    sounds.bomb.play().catch(e => console.log("Sound error:", e));
   }
   
   // Create floating text
@@ -733,8 +757,6 @@
         setTimeout(() => {
           scoreElement.style.transform = 'translateX(-50%) scale(1) rotate(0)';
         }, 200);
-        
-        sounds.catch.play().catch(e => console.log("Sound error:", e));
       } else if (meme.y > canvas.height + meme.height) {
         memes.splice(i, 1);
       }
@@ -876,8 +898,6 @@
     finalScoreElement.textContent = `Поймано: ${score} мемов`;
     gameOverScreen.style.display = 'flex';
     
-    sounds.gameOver.play().catch(e => console.log("Sound error:", e));
-    
     if (score > highScore) {
       highScore = score;
       localStorage.setItem('memeHighScore', highScore);
@@ -885,8 +905,6 @@
       
       finalScoreElement.textContent = `НОВЫЙ РЕКОРД: ${highScore}!`;
       finalScoreElement.style.animation = 'rainbow 0.5s infinite';
-      
-      sounds.highScore.play().catch(e => console.log("Sound error:", e));
       
       addToLeaderboard(highScore);
     }
@@ -934,14 +952,18 @@
   
   // Leaderboard toggle
   leaderboardBtn.addEventListener('click', () => {
-    const isVisible = leaderboardElement.style.display === 'block';
-    leaderboardElement.style.display = isVisible ? 'none' : 'block';
+    leaderboardElement.style.display = 'block';
+  });
+
+  closeLeaderboardBtn.addEventListener('click', () => {
+    leaderboardElement.style.display = 'none';
   });
   
   // Initialize
   loadImages();
   resize();
   updateLeaderboard();
+  highScoreElement.textContent = `Рекорд: ${highScore}`;
   
   // Telegram integration
   if (window.Telegram && window.Telegram.WebApp) {
@@ -961,6 +983,17 @@
       const userName = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username;
       console.log(`Игрок: ${userName}`);
     }
+  }
+
+  // Для тестирования вне Telegram
+  if (!window.Telegram) {
+    console.log("Running outside Telegram, using mock data");
+    leaderboard = [
+      { id: 1, name: "Иван", score: 500, photo: "https://via.placeholder.com/30" },
+      { id: 2, name: "Мария", score: 450, photo: "https://via.placeholder.com/30" },
+      { id: 3, name: "Алексей", score: 400, photo: "https://via.placeholder.com/30" }
+    ];
+    updateLeaderboard();
   }
 </script>
 </body>

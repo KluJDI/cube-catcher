@@ -9,7 +9,6 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      /* Ваше фоновое изображение */
       background: url('https://i.ytimg.com/vi/1qiuIpSqkfo/maxresdefault.jpg') no-repeat center center fixed;
       background-size: cover;
       color: white;
@@ -176,14 +175,87 @@
     @keyframes explode {
       to { transform: scale(3); opacity: 0; }
     }
-
     #music-toggle {
-  transition: all 0.3s ease;
-}
-#music-toggle:hover {
-  transform: scale(1.1);
-  background: rgba(0,0,0,0.7) !important;
-}
+      transition: all 0.3s ease;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 30;
+      font-size: 24px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #music-toggle:hover {
+      transform: scale(1.1);
+      background: rgba(0,0,0,0.7) !important;
+    }
+    #leaderboard {
+      position: absolute;
+      top: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      border-radius: 15px;
+      padding: 15px;
+      width: 80%;
+      max-width: 400px;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      z-index: 25;
+      border: 2px solid #ff00cc;
+    }
+    #leaderboard h2 {
+      color: #ffff00;
+      text-align: center;
+      margin-top: 0;
+    }
+    #leaderboard table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #leaderboard th, #leaderboard td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #444;
+    }
+    #leaderboard th {
+      color: #00ccff;
+    }
+    #leaderboard tr:nth-child(even) {
+      background: rgba(255,255,255,0.1);
+    }
+    #leaderboard-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid white;
+      color: white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tg-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -191,6 +263,21 @@
   <div id="score">0 МЕМОВ</div>
   <div id="lives">❤️❤️❤️</div>
   <div id="high-score">Рекорд: 0</div>
+</div>
+
+<button id="leaderboard-btn">🏆</button>
+<div id="leaderboard">
+  <h2>Таблица лидеров</h2>
+  <table id="leaderboard-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Игрок</th>
+        <th>Рекорд</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
 
 <div id="start-screen">
@@ -233,44 +320,24 @@
   let animationFrameId;
   let lastSpawnTime = 0;
 
-  // ===== ДОБАВЬТЕ ЭТО ПРЯМО ЗДЕСЬ =====
-  // Фоновая музыка
+  // Leaderboard
+  let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+  const leaderboardBtn = document.getElementById('leaderboard-btn');
+  const leaderboardTable = document.getElementById('leaderboard-table');
+  const leaderboardElement = document.getElementById('leaderboard');
+
+  // Music
   const backgroundMusic = new Audio('sounds/background-music.mp3');
   backgroundMusic.loop = true;
   backgroundMusic.volume = 0.3;
   let isMusicPlaying = false;
 
-  // Кнопка управления музыкой
+  // Music toggle button
   const musicToggle = document.createElement('button');
   musicToggle.id = 'music-toggle';
   musicToggle.innerHTML = '🔇';
-  musicToggle.style.position = 'absolute';
-  musicToggle.style.bottom = '20px';
-  musicToggle.style.right = '20px';
-  musicToggle.style.zIndex = '30';
-  musicToggle.style.fontSize = '24px';
-  musicToggle.style.background = 'rgba(0,0,0,0.5)';
-  musicToggle.style.border = '2px solid white';
-  musicToggle.style.borderRadius = '50%';
-  musicToggle.style.width = '50px';
-  musicToggle.style.height = '50px';
-  musicToggle.style.cursor = 'pointer';
   document.body.appendChild(musicToggle);
 
-  // Обработчик клика для музыки
-  musicToggle.addEventListener('click', () => {
-    isMusicPlaying = !isMusicPlaying;
-    if (isMusicPlaying) {
-      backgroundMusic.play().catch(e => console.log("Music error:", e));
-      musicToggle.innerHTML = '🔊';
-    } else {
-      backgroundMusic.pause();
-      musicToggle.innerHTML = '🔇';
-    }
-    localStorage.setItem('musicState', isMusicPlaying);
-  });
-  // ===== КОНЕЦ ДОБАВЛЕНИЯ =====
-  
   // Game objects
   let bucket = { 
     x: 200, 
@@ -287,13 +354,13 @@
   let particles = [];
   let floatingTexts = [];
   
-  // Ваши звуки
+  // Sounds
   const sounds = {
-  catch: new Audio('sounds/catch.mp3'),
-  bomb: new Audio('sounds/bomb.mp3'),
-  gameOver: new Audio('sounds/gameover.mp3'),
-  highScore: new Audio('sounds/highscore.mp3')
-};
+    catch: new Audio('sounds/catch.mp3'),
+    bomb: new Audio('sounds/bomb.mp3'),
+    gameOver: new Audio('sounds/gameover.mp3'),
+    highScore: new Audio('sounds/highscore.mp3')
+  };
   
   // Meme types with different rarities
   const memeTypes = [
@@ -311,18 +378,17 @@
   
   // Load images
   function loadImages() {
-    // Ваши мем-изображения
     const memeUrls = [
-      'https://steamuserimages-a.akamaihd.net/ugc/90472493367987320/2F4D0894F18F0C96AA64DA536DB0445FF62DB709/?imw=512&amp;imh=685&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true', // Ждун
-      'https://www.pngmart.com/files/23/Pop-Cat-PNG-Isolated-HD.png', // Кот-кричалка
-      'https://cdna.artstation.com/p/assets/images/images/034/163/438/large/james-busby-big-image.jpg?1611582008', // Дождь из мужиков
-      'https://i.pinimg.com/originals/4b/dd/56/4bdd56ee84ddb2dc7b1aea998258930f.png', // Серьёзный кот
-      'https://steamuserimages-a.akamaihd.net/ugc/1818895633364928244/3E8E8742F2A8764BFC6763E6D4357A7BFFC17423/?imw=512&amp;imh=412&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true', // Троллфейс
-      'https://www.pngmart.com/files/12/Star-Wars-Master-Yoda-PNG-Transparent-Image.png', // Йода
-      'https://i.redd.it/vwyllr9wy8271.png', // Doge
-      'https://wallpapers.com/images/high/smug-pepe-the-frog-meme-i9skbogmokgpngux.png', // Pepe
-      'https://i-a.d-cd.net/lxhiT1u6Y8GnXWwfhg0e-pAd5Y0-1920.jpg', // Harold
-      'https://tr.rbxcdn.com/180DAY-e7bf6d75c8753c56a2be9d55ec98fe47/420/420/Image/Png/noFilter'  // тун тун тун сахур
+      'https://steamuserimages-a.akamaihd.net/ugc/90472493367987320/2F4D0894F18F0C96AA64DA536DB0445FF62DB709/?imw=512&amp;imh=685&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true',
+      'https://www.pngmart.com/files/23/Pop-Cat-PNG-Isolated-HD.png',
+      'https://cdna.artstation.com/p/assets/images/images/034/163/438/large/james-busby-big-image.jpg?1611582008',
+      'https://i.pinimg.com/originals/4b/dd/56/4bdd56ee84ddb2dc7b1aea998258930f.png',
+      'https://steamuserimages-a.akamaihd.net/ugc/1818895633364928244/3E8E8742F2A8764BFC6763E6D4357A7BFFC17423/?imw=512&amp;imh=412&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true',
+      'https://www.pngmart.com/files/12/Star-Wars-Master-Yoda-PNG-Transparent-Image.png',
+      'https://i.redd.it/vwyllr9wy8271.png',
+      'https://wallpapers.com/images/high/smug-pepe-the-frog-meme-i9skbogmokgpngux.png',
+      'https://i-a.d-cd.net/lxhiT1u6Y8GnXWwfhg0e-pAd5Y0-1920.jpg',
+      'https://tr.rbxcdn.com/180DAY-e7bf6d75c8753c56a2be9d55ec98fe47/420/420/Image/Png/noFilter'
     ];
     
     memeUrls.forEach(url => {
@@ -331,11 +397,10 @@
       memeImages.push(img);
     });
     
-    // Ваше изображение бомбы
     bombImage.src = 'https://www.pngplay.com/wp-content/uploads/6/Animated-Bomb-Transparent-Free-PNG.png';
   }
   
-  // Resize canvas to fit window
+  // Resize canvas
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -343,33 +408,100 @@
     bucket.x = canvas.width / 2 - bucket.width / 2;
   }
   
-  window.addEventListener('resize', resize);
-  resize();
+  // Update leaderboard
+  function updateLeaderboard() {
+    leaderboard.sort((a, b) => b.score - a.score);
+    if (leaderboard.length > 10) {
+      leaderboard = leaderboard.slice(0, 10);
+    }
+    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    
+    const tbody = leaderboardTable.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    leaderboard.forEach((player, index) => {
+      const row = document.createElement('tr');
+      
+      const rankCell = document.createElement('td');
+      rankCell.textContent = index + 1;
+      
+      const nameCell = document.createElement('td');
+      if (player.photo) {
+        const img = document.createElement('img');
+        img.src = player.photo;
+        img.className = 'tg-avatar';
+        nameCell.appendChild(img);
+      }
+      nameCell.appendChild(document.createTextNode(player.name || 'Аноним'));
+      
+      const scoreCell = document.createElement('td');
+      scoreCell.textContent = player.score;
+      
+      row.appendChild(rankCell);
+      row.appendChild(nameCell);
+      row.appendChild(scoreCell);
+      tbody.appendChild(row);
+    });
+  }
   
-  // Create a new meme with random properties
+  // Add player to leaderboard
+  function addToLeaderboard(score) {
+    let userData = {};
+    
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tgUser = Telegram.WebApp.initDataUnsafe.user;
+      userData = {
+        id: tgUser.id,
+        name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username,
+        photo: tgUser.photo_url,
+        score: score
+      };
+    } else {
+      const userName = prompt('Поздравляем с новым рекордом! Введите ваше имя:', 'Аноним');
+      if (userName === null) return;
+      
+      userData = {
+        id: Date.now(),
+        name: userName,
+        score: score
+      };
+    }
+    
+    const existingPlayerIndex = leaderboard.findIndex(p => p.id === userData.id);
+    
+    if (existingPlayerIndex !== -1) {
+      if (score > leaderboard[existingPlayerIndex].score) {
+        leaderboard[existingPlayerIndex].score = score;
+      }
+    } else {
+      leaderboard.push(userData);
+    }
+    
+    updateLeaderboard();
+  }
+  
+  // Spawn meme
   function spawnMeme() {
-    // 20% chance to spawn bomb instead of meme
     if (Math.random() < 0.2) {
       spawnBomb();
       return;
     }
     
-    // Choose meme type based on rarity
     let memeType;
     const roll = Math.random() * 100;
     
     if (roll < 40) {
-      memeType = memeTypes[0]; // Common
+      memeType = memeTypes[0];
     } else if (roll < 70) {
-      memeType = memeTypes[1]; // Common
+      memeType = memeTypes[1];
     } else if (roll < 85) {
-      memeType = memeTypes[2]; // Uncommon
+      memeType = memeTypes[2];
     } else if (roll < 95) {
-      memeType = memeTypes[3]; // Uncommon
+      memeType = memeTypes[3];
     } else if (roll < 98) {
-      memeType = memeTypes[4]; // Rare
+      memeType = memeTypes[4];
     } else {
-      memeType = memeTypes[Math.floor(Math.random() * memeTypes.length)]; // Very rare
+      memeType = memeTypes[Math.floor(Math.random() * memeTypes.length)];
     }
     
     const size = 50 + Math.random() * 50;
@@ -392,7 +524,7 @@
     });
   }
   
-  // Create a bomb
+  // Spawn bomb
   function spawnBomb() {
     const size = 60;
     
@@ -410,7 +542,7 @@
     });
   }
   
-  // Create particles for effects
+  // Create particles
   function createParticles(x, y, color, count) {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -429,7 +561,7 @@
     }
   }
   
-  // Create explosion effect
+  // Create explosion
   function createExplosion(x, y) {
     const explosion = document.createElement('div');
     explosion.className = 'explosion';
@@ -437,12 +569,10 @@
     explosion.style.top = `${y - 50}px`;
     document.body.appendChild(explosion);
     
-    // Remove after animation
     setTimeout(() => {
       explosion.remove();
     }, 500);
     
-    // Play your bomb sound
     sounds.bomb.play().catch(e => console.log("Sound error:", e));
   }
   
@@ -457,9 +587,8 @@
     });
   }
   
-  // Draw the bucket
+  // Draw bucket
   function drawBucket() {
-    // Bucket body
     ctx.fillStyle = bucket.color;
     ctx.beginPath();
     ctx.moveTo(bucket.x, bucket.y);
@@ -469,12 +598,10 @@
     ctx.closePath();
     ctx.fill();
     
-    // Bucket rim
     ctx.strokeStyle = '#FFC107';
     ctx.lineWidth = 5;
     ctx.stroke();
     
-    // Bucket handle
     ctx.beginPath();
     ctx.moveTo(bucket.x + 20, bucket.y + 10);
     ctx.quadraticCurveTo(
@@ -486,15 +613,35 @@
     ctx.stroke();
   }
   
-  // Update and draw all game objects
+  // Update lives display
+  function updateLivesDisplay() {
+    livesElement.textContent = '❤️'.repeat(lives) + '♡'.repeat(3 - lives);
+    
+    livesElement.style.transform = 'scale(1.5)';
+    livesElement.style.color = 'red';
+    setTimeout(() => {
+      livesElement.style.transform = 'scale(1)';
+      livesElement.style.color = '';
+    }, 300);
+  }
+  
+  // Random color
+  function getRandomColor() {
+    const colors = [
+      '#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', 
+      '#9C27B0', '#FF9800', '#00BCD4', '#E91E63',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF5722'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+  
+  // Game update
   function update() {
     const now = Date.now();
     
-    // Clear canvas with semi-transparent background for motion blur effect
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw background pattern
     ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
     for (let i = 0; i < 50; i++) {
       ctx.fillRect(
@@ -504,26 +651,21 @@
       );
     }
     
-    // Spawn new objects periodically
     if (gameRunning && now - lastSpawnTime > 500 - Math.min(score, 500) / 3) {
       spawnMeme();
       lastSpawnTime = now;
     }
     
-    // Draw bucket
     drawBucket();
     
-    // Update and draw memes
     for (let i = memes.length - 1; i >= 0; i--) {
       const meme = memes[i];
       
-      // Update position and rotation
       meme.y += meme.speed;
       meme.rotation += meme.rotationSpeed;
       meme.time += 0.1;
       meme.wobble = Math.sin(meme.time * meme.wobbleSpeed) * 5;
       
-      // Draw with rotation and wobble
       ctx.save();
       ctx.translate(meme.x + meme.width/2, meme.y + meme.height/2);
       ctx.rotate(meme.rotation);
@@ -537,7 +679,6 @@
           meme.height
         );
       } else {
-        // Placeholder
         ctx.fillStyle = getRandomColor();
         ctx.fillRect(
           -meme.width/2 + meme.wobble, 
@@ -564,14 +705,12 @@
       
       ctx.restore();
       
-      // Check collision with bucket
       if (
         meme.y + meme.height > bucket.y &&
         meme.x + meme.width > bucket.x &&
         meme.x < bucket.x + bucket.width &&
         meme.y + meme.height < bucket.y + bucket.height
       ) {
-        // Meme caught!
         createParticles(
           meme.x + meme.width/2, 
           meme.y + meme.height/2, 
@@ -590,30 +729,24 @@
         score += meme.type.points;
         scoreElement.textContent = `${score} МЕМОВ`;
         
-        // Animate score
         scoreElement.style.transform = 'translateX(-50%) scale(1.3) rotate(5deg)';
         setTimeout(() => {
           scoreElement.style.transform = 'translateX(-50%) scale(1) rotate(0)';
         }, 200);
         
-        // Play your catch sound
         sounds.catch.play().catch(e => console.log("Sound error:", e));
       } else if (meme.y > canvas.height + meme.height) {
-        // Meme missed
         memes.splice(i, 1);
       }
     }
     
-    // Update and draw bombs
     for (let i = bombs.length - 1; i >= 0; i--) {
       const bomb = bombs[i];
       
-      // Update position and rotation
       bomb.y += bomb.speed;
       bomb.rotation += bomb.rotationSpeed;
       bomb.time += 0.1;
       
-      // Draw with rotation
       ctx.save();
       ctx.translate(bomb.x + bomb.width/2, bomb.y + bomb.height/2);
       ctx.rotate(bomb.rotation);
@@ -627,7 +760,6 @@
           bomb.height
         );
       } else {
-        // Placeholder
         ctx.fillStyle = '#ff0000';
         ctx.beginPath();
         ctx.arc(0, 0, bomb.width/2, 0, Math.PI * 2);
@@ -642,14 +774,12 @@
       
       ctx.restore();
       
-      // Check collision with bucket
       if (
         bomb.y + bomb.height > bucket.y &&
         bomb.x + bomb.width > bucket.x &&
         bomb.x < bucket.x + bucket.width &&
         bomb.y + bomb.height < bucket.y + bucket.height
       ) {
-        // Bomb caught - lose life!
         createExplosion(bomb.x + bomb.width/2, bomb.y + bomb.height/2);
         bombs.splice(i, 1);
         lives--;
@@ -658,25 +788,22 @@
         if (lives <= 0) {
           gameOver();
         } else {
-          // Shake screen on hit
           document.body.style.animation = 'shake 0.5s';
           setTimeout(() => {
             document.body.style.animation = '';
           }, 500);
         }
       } else if (bomb.y > canvas.height + bomb.height) {
-        // Bomb missed
         bombs.splice(i, 1);
       }
     }
     
-    // Update and draw particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.2; // gravity
+      p.vy += 0.2;
       p.life--;
       p.opacity = p.life / 60;
       
@@ -692,7 +819,6 @@
     }
     ctx.globalAlpha = 1;
     
-    // Update and draw floating texts
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
       const text = floatingTexts[i];
       
@@ -716,30 +842,7 @@
     }
   }
   
-  // Update lives display
-  function updateLivesDisplay() {
-    livesElement.textContent = '❤️'.repeat(lives) + '♡'.repeat(3 - lives);
-    
-    // Pulse effect when losing life
-    livesElement.style.transform = 'scale(1.5)';
-    livesElement.style.color = 'red';
-    setTimeout(() => {
-      livesElement.style.transform = 'scale(1)';
-      livesElement.style.color = '';
-    }, 300);
-  }
-  
-  // Helper function for random colors
-  function getRandomColor() {
-    const colors = [
-      '#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', 
-      '#9C27B0', '#FF9800', '#00BCD4', '#E91E63',
-      '#8BC34A', '#CDDC39', '#FFC107', '#FF5722'
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-  
-  // Start the game
+  // Start game
   function startGame() {
     score = 0;
     lives = 3;
@@ -754,42 +857,38 @@
     gameOverScreen.style.display = 'none';
     lastSpawnTime = Date.now();
     
-    // Start with 3 memes
+    if (localStorage.getItem('musicState') !== 'false') {
+      isMusicPlaying = true;
+      backgroundMusic.play().catch(e => console.log("Music error:", e));
+      musicToggle.innerHTML = '🔊';
+    }
+    
     for (let i = 0; i < 3; i++) {
       setTimeout(() => spawnMeme(), i * 500);
     }
     
     update();
   }
-
-  // Автовоспроизведение музыки при старте игры
-    if (localStorage.getItem('musicState') !== 'false') {
-      isMusicPlaying = true;
-      backgroundMusic.play().catch(e => console.log("Music error:", e));
-      musicToggle.innerHTML = '🔊';
-    }
   
-  // End the game
+  // Game over
   function gameOver() {
     gameRunning = false;
     finalScoreElement.textContent = `Поймано: ${score} мемов`;
     gameOverScreen.style.display = 'flex';
     
-    // Play your game over sound
     sounds.gameOver.play().catch(e => console.log("Sound error:", e));
     
-    // Update high score
     if (score > highScore) {
       highScore = score;
       localStorage.setItem('memeHighScore', highScore);
       highScoreElement.textContent = `Рекорд: ${highScore}`;
       
-      // Special effect for new high score
       finalScoreElement.textContent = `НОВЫЙ РЕКОРД: ${highScore}!`;
       finalScoreElement.style.animation = 'rainbow 0.5s infinite';
       
-      // Play your high score sound
       sounds.highScore.play().catch(e => console.log("Sound error:", e));
+      
+      addToLeaderboard(highScore);
     }
     
     cancelAnimationFrame(animationFrameId);
@@ -799,11 +898,10 @@
   startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', startGame);
   
-  // Touch and mouse controls
+  // Controls
   function handleMove(x) {
     if (!gameRunning) return;
     
-    // Smooth movement with boundaries
     const targetX = Math.max(
       bucket.width/2, 
       Math.min(x - bucket.width/2, canvas.width - bucket.width/2)
@@ -821,45 +919,35 @@
     handleMove(e.clientX);
   });
   
-  // Load images when page loads
-  loadImages();
-  
-  // Resize canvas initially
-  resize();
-  
-  // Add shake animation to styles
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes shake {
-      0% { transform: translate(1px, 1px) rotate(0deg); }
-      10% { transform: translate(-1px, -2px) rotate(-1deg); }
-      20% { transform: translate(-3px, 0px) rotate(1deg); }
-      30% { transform: translate(3px, 2px) rotate(0deg); }
-      40% { transform: translate(1px, -1px) rotate(1deg); }
-      50% { transform: translate(-1px, 2px) rotate(-1deg); }
-      60% { transform: translate(-3px, 1px) rotate(0deg); }
-      70% { transform: translate(3px, 1px) rotate(-1deg); }
-      80% { transform: translate(-1px, -1px) rotate(1deg); }
-      90% { transform: translate(1px, 2px) rotate(0deg); }
-      100% { transform: translate(1px, -2px) rotate(-1deg); }
+  // Music toggle
+  musicToggle.addEventListener('click', () => {
+    isMusicPlaying = !isMusicPlaying;
+    if (isMusicPlaying) {
+      backgroundMusic.play().catch(e => console.log("Music error:", e));
+      musicToggle.innerHTML = '🔊';
+    } else {
+      backgroundMusic.pause();
+      musicToggle.innerHTML = '🔇';
     }
-  `;
-  document.head.appendChild(style);
+    localStorage.setItem('musicState', isMusicPlaying);
+  });
   
-  // For Telegram Mini App integration
+  // Leaderboard toggle
+  leaderboardBtn.addEventListener('click', () => {
+    const isVisible = leaderboardElement.style.display === 'block';
+    leaderboardElement.style.display = isVisible ? 'none' : 'block';
+  });
+  
+  // Initialize
+  loadImages();
+  resize();
+  updateLeaderboard();
+  
+  // Telegram integration
   if (window.Telegram && window.Telegram.WebApp) {
-    // Expand the app to full viewport
     Telegram.WebApp.expand();
+    Telegram.WebApp.enableClosingConfirmation();
     
-    // Change background color to match Telegram theme
-    document.body.style.background = Telegram.WebApp.themeParams.bg_color || 'linear-gradient(to bottom, #ff00cc, #3333ff)';
-    
-    // Adjust text color based on theme
-    const textColor = Telegram.WebApp.themeParams.text_color || 'white';
-    document.body.style.color = textColor;
-    document.querySelector('h1').style.color = textColor;
-    
-    // Handle back button
     Telegram.WebApp.BackButton.onClick(() => {
       if (gameRunning) {
         gameOver();
@@ -868,10 +956,11 @@
       }
     });
     
-    // Show back button when game starts
-    startBtn.addEventListener('click', () => {
-      Telegram.WebApp.BackButton.show();
-    });
+    const tgUser = Telegram.WebApp.initDataUnsafe.user;
+    if (tgUser) {
+      const userName = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username;
+      console.log(`Игрок: ${userName}`);
+    }
   }
 </script>
 </body>

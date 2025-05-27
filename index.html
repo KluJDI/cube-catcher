@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кликер Боссов</title>
+    <title>Лайкер Боссов</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -15,6 +15,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         .header {
@@ -24,10 +25,10 @@
             margin-bottom: 20px;
         }
         
-        .coins {
+        .likes {
             font-size: 18px;
             font-weight: bold;
-            color: #FFD700;
+            color: #FF69B4;
         }
         
         .boss-container {
@@ -36,6 +37,7 @@
             align-items: center;
             margin: 20px 0;
             flex-grow: 1;
+            position: relative;
         }
         
         .boss-image {
@@ -46,12 +48,14 @@
             border: 3px solid #444;
             border-radius: 10px;
             background-color: #2a2a2a;
+            transition: transform 0.2s;
         }
         
         .boss-name {
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 5px;
+            text-align: center;
         }
         
         .boss-hp {
@@ -70,10 +74,10 @@
             transition: width 0.3s;
         }
         
-        .click-area {
+        .like-button {
             width: 150px;
             height: 150px;
-            background-color: #3498db;
+            background-color: #FF69B4;
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -83,13 +87,19 @@
             margin-bottom: 20px;
             user-select: none;
             cursor: pointer;
-            box-shadow: 0 5px 0 #2980b9;
+            box-shadow: 0 5px 0 #FF1493;
             transition: transform 0.1s;
+            border: none;
+            color: white;
         }
         
-        .click-area:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 0 #2980b9;
+        .like-button:active {
+            transform: scale(0.95) rotate(10deg);
+            box-shadow: 0 2px 0 #FF1493;
+        }
+        
+        .like-icon {
+            font-size: 60px;
         }
         
         .stats {
@@ -138,7 +148,7 @@
         }
         
         .upgrade-cost {
-            color: #FFD700;
+            color: #FF69B4;
             font-size: 14px;
             margin-bottom: 5px;
         }
@@ -157,101 +167,179 @@
             cursor: not-allowed;
         }
         
-        .ad-button {
-            background-color: #9b59b6;
+        .easter-egg {
+            position: absolute;
+            font-size: 24px;
+            opacity: 0;
+            pointer-events: none;
+            animation: float-up 2s forwards;
+            z-index: 100;
+        }
+        
+        @keyframes float-up {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+        }
+        
+        .secret-button {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            opacity: 0.1;
+            cursor: pointer;
+        }
+        
+        .music-control {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: none;
             border: none;
             color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: bold;
+            font-size: 20px;
             cursor: pointer;
-            width: 100%;
-            margin-top: auto;
         }
     </style>
 </head>
 <body>
+    <button class="music-control" id="music-control">🔊</button>
+    
     <div class="header">
         <div class="boss-level">Босс: 1</div>
-        <div class="coins">0 RUB</div>
+        <div class="likes" id="likes">0 лайков</div>
     </div>
     
-    <div class="boss-container">
-        <img src="https://via.placeholder.com/200" alt="Босс" class="boss-image" id="boss-image">
+    <div class="boss-container" id="boss-container">
+        <img src="https://via.placeholder.com/200/FF69B4/FFFFFF?text=Босс+1" alt="Босс" class="boss-image" id="boss-image">
         <div class="boss-name" id="boss-name">Питеин Крипер</div>
         <div class="boss-hp">
             <div class="boss-hp-fill" id="boss-hp"></div>
         </div>
         
-        <div class="click-area" id="click-area">КЛИК!</div>
+        <button class="like-button" id="like-button">
+            <span class="like-icon">❤️</span>
+        </button>
         
         <div class="stats">
             <div class="stat-item">
-                <div class="stat-value" id="clicks">0</div>
-                <div class="stat-label">Кликов</div>
+                <div class="stat-value" id="total-likes">0</div>
+                <div class="stat-label">Всего лайков</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="dps">0</div>
-                <div class="stat-label">Урон/сек</div>
+                <div class="stat-value" id="lps">0</div>
+                <div class="stat-label">Лайков/сек</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="damage">1</div>
-                <div class="stat-label">Урон/клик</div>
+                <div class="stat-value" id="like-power">1</div>
+                <div class="stat-label">Сила лайка</div>
             </div>
         </div>
     </div>
     
     <div class="upgrades">
         <div class="upgrade">
-            <div class="upgrade-name">Улучшить клик</div>
-            <div class="upgrade-cost" id="click-upgrade-cost">50 RUB</div>
+            <div class="upgrade-name">Улучшить лайк</div>
+            <div class="upgrade-cost" id="click-upgrade-cost">50 лайков</div>
             <button class="upgrade-button" id="click-upgrade">Купить</button>
         </div>
         <div class="upgrade">
-            <div class="upgrade-name">Авто-урон</div>
-            <div class="upgrade-cost" id="auto-upgrade-cost">100 RUB</div>
+            <div class="upgrade-name">Авто-лайкер</div>
+            <div class="upgrade-cost" id="auto-upgrade-cost">100 лайков</div>
             <button class="upgrade-button" id="auto-upgrade">Купить</button>
+        </div>
+        <div class="upgrade">
+            <div class="upgrade-name">Критический удар</div>
+            <div class="upgrade-cost" id="crit-upgrade-cost">200 лайков</div>
+            <button class="upgrade-button" id="crit-upgrade">Купить</button>
+        </div>
+        <div class="upgrade">
+            <div class="upgrade-name">Ультра-лайк</div>
+            <div class="upgrade-cost" id="ultra-upgrade-cost">500 лайков</div>
+            <button class="upgrade-button" id="ultra-upgrade">Купить</button>
         </div>
     </div>
     
-    <button class="ad-button">Посмотреть рекламу</button>
+    <div class="secret-button" id="secret-button"></div>
+
+    <audio id="background-music" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="like-sound">
+        <source src="https://www.soundjay.com/buttons/sounds/button-09.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="boss-defeated">
+        <source src="https://www.soundjay.com/buttons/sounds/button-21.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="easter-egg-sound">
+        <source src="https://www.soundjay.com/buttons/sounds/button-10.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         // Game state
         const gameState = {
-            coins: 0,
+            likes: 0,
+            totalLikes: 0,
             bossHp: 100,
             maxBossHp: 100,
             bossLevel: 1,
-            clicks: 0,
-            clickDamage: 1,
-            autoDamage: 0,
+            likePower: 1,
+            autoLikes: 0,
+            critChance: 0,
+            critMultiplier: 2,
+            ultraChance: 0,
             autoUpgradeLevel: 0,
             clickUpgradeLevel: 0,
+            critUpgradeLevel: 0,
+            ultraUpgradeLevel: 0,
             bosses: [
-                { name: "Питеин Крипер", image: "https://via.placeholder.com/200/FF0000/FFFFFF?text=Босс+1" },
-                { name: "Зюзель", image: "https://via.placeholder.com/200/00FF00/000000?text=Босс+2" },
-                { name: "Монстр 404", image: "https://via.placeholder.com/200/0000FF/FFFFFF?text=Босс+3" },
-                { name: "Король RUB", image: "https://via.placeholder.com/200/FFFF00/000000?text=Босс+4" },
-                { name: "Финальный Босс", image: "https://via.placeholder.com/200/FF00FF/FFFFFF?text=Финальный" }
-            ]
+                { name: "Питеин Крипер", image: "https://via.placeholder.com/200/FF69B4/FFFFFF?text=Босс+1" },
+                { name: "Зюзель", image: "https://via.placeholder.com/200/FF1493/FFFFFF?text=Босс+2" },
+                { name: "Монстр 404", image: "https://via.placeholder.com/200/C71585/FFFFFF?text=Босс+3" },
+                { name: "Король Лайков", image: "https://via.placeholder.com/200/DB7093/FFFFFF?text=Босс+4" },
+                { name: "Лайко-Дракон", image: "https://via.placeholder.com/200/FF00FF/FFFFFF?text=Босс+5" },
+                { name: "Финальный Босс", image: "https://via.placeholder.com/200/FF69B4/000000?text=ФИНАЛ" }
+            ],
+            easterEggs: [
+                "❤️", "💖", "💕", "💘", "💝", "💗", "💓", "💞", "💟", "😍",
+                "🔥", "🌟", "✨", "🎉", "👍", "👑", "💎", "🤑", "🤩", "🥳"
+            ],
+            musicEnabled: true
         };
 
         // DOM elements
         const elements = {
-            coins: document.querySelector('.coins'),
+            likes: document.getElementById('likes'),
             bossHp: document.getElementById('boss-hp'),
             bossLevel: document.querySelector('.boss-level'),
             bossName: document.getElementById('boss-name'),
             bossImage: document.getElementById('boss-image'),
-            clickArea: document.getElementById('click-area'),
-            clicks: document.getElementById('clicks'),
-            dps: document.getElementById('dps'),
-            damage: document.getElementById('damage'),
+            bossContainer: document.getElementById('boss-container'),
+            likeButton: document.getElementById('like-button'),
+            totalLikes: document.getElementById('total-likes'),
+            lps: document.getElementById('lps'),
+            likePower: document.getElementById('like-power'),
             clickUpgrade: document.getElementById('click-upgrade'),
             autoUpgrade: document.getElementById('auto-upgrade'),
+            critUpgrade: document.getElementById('crit-upgrade'),
+            ultraUpgrade: document.getElementById('ultra-upgrade'),
             clickUpgradeCost: document.getElementById('click-upgrade-cost'),
-            autoUpgradeCost: document.getElementById('auto-upgrade-cost')
+            autoUpgradeCost: document.getElementById('auto-upgrade-cost'),
+            critUpgradeCost: document.getElementById('crit-upgrade-cost'),
+            ultraUpgradeCost: document.getElementById('ultra-upgrade-cost'),
+            musicControl: document.getElementById('music-control'),
+            backgroundMusic: document.getElementById('background-music'),
+            likeSound: document.getElementById('like-sound'),
+            bossDefeated: document.getElementById('boss-defeated'),
+            easterEggSound: document.getElementById('easter-egg-sound'),
+            secretButton: document.getElementById('secret-button')
         };
 
         // Initialize the game
@@ -262,16 +350,32 @@
             
             // Start game loop
             setInterval(gameLoop, 1000);
+            
+            // Try to play music (muted by default until user interaction)
+            elements.backgroundMusic.volume = 0.5;
+            if (gameState.musicEnabled) {
+                elements.backgroundMusic.play().catch(e => {
+                    console.log("Автовоспроизведение музыки заблокировано");
+                    gameState.musicEnabled = false;
+                    elements.musicControl.textContent = "🔇";
+                });
+            }
         }
 
         // Game loop
         function gameLoop() {
-            // Auto damage
-            if (gameState.autoDamage > 0) {
-                attackBoss(gameState.autoDamage);
+            // Auto likes
+            if (gameState.autoLikes > 0) {
+                const autoLikes = gameState.autoLikes;
+                gameState.likes += autoLikes;
+                gameState.totalLikes += autoLikes;
+                
+                // Auto attack
+                attackBoss(autoLikes);
             }
             
             updateUI();
+            saveGame();
         }
 
         // Attack boss
@@ -280,12 +384,19 @@
             
             if (gameState.bossHp <= 0) {
                 // Boss defeated
-                gameState.coins += Math.floor(gameState.maxBossHp * 0.1);
+                elements.bossDefeated.play();
+                gameState.likes += Math.floor(gameState.maxBossHp * 0.2);
                 gameState.bossLevel++;
                 
                 // Increase boss HP for next level
-                gameState.maxBossHp = Math.floor(gameState.maxBossHp * 1.5);
+                gameState.maxBossHp = Math.floor(gameState.maxBossHp * 1.8);
                 gameState.bossHp = gameState.maxBossHp;
+                
+                // Shake boss image
+                elements.bossImage.style.transform = "scale(1.2)";
+                setTimeout(() => {
+                    elements.bossImage.style.transform = "scale(1)";
+                }, 200);
                 
                 // Update boss info
                 updateBossInfo();
@@ -304,10 +415,26 @@
             elements.bossImage.src = boss.image;
         }
 
+        // Create easter egg animation
+        function createEasterEgg(x, y) {
+            const egg = document.createElement('div');
+            egg.className = 'easter-egg';
+            egg.textContent = gameState.easterEggs[Math.floor(Math.random() * gameState.easterEggs.length)];
+            egg.style.left = `${x}px`;
+            egg.style.top = `${y}px`;
+            
+            elements.bossContainer.appendChild(egg);
+            
+            setTimeout(() => {
+                egg.remove();
+            }, 2000);
+        }
+
         // Update UI
         function updateUI() {
-            // Update coins
-            elements.coins.textContent = `${gameState.coins.toFixed(2)} / 10 000 RUB`;
+            // Update likes
+            elements.likes.textContent = `${gameState.likes} лайков`;
+            elements.totalLikes.textContent = gameState.totalLikes;
             
             // Update boss HP
             const hpPercent = (gameState.bossHp / gameState.maxBossHp) * 100;
@@ -317,35 +444,91 @@
             elements.bossLevel.textContent = `Босс: ${gameState.bossLevel}`;
             
             // Update stats
-            elements.clicks.textContent = gameState.clicks;
-            elements.dps.textContent = gameState.autoDamage;
-            elements.damage.textContent = gameState.clickDamage;
+            elements.lps.textContent = gameState.autoLikes;
+            elements.likePower.textContent = gameState.likePower;
             
             // Update upgrade costs and availability
             const nextClickUpgradeCost = 50 * Math.pow(2, gameState.clickUpgradeLevel);
-            elements.clickUpgradeCost.textContent = `${nextClickUpgradeCost} RUB`;
-            elements.clickUpgrade.disabled = gameState.coins < nextClickUpgradeCost;
+            elements.clickUpgradeCost.textContent = `${nextClickUpgradeCost} лайков`;
+            elements.clickUpgrade.disabled = gameState.likes < nextClickUpgradeCost;
             
             const nextAutoUpgradeCost = 100 * Math.pow(2, gameState.autoUpgradeLevel);
-            elements.autoUpgradeCost.textContent = `${nextAutoUpgradeCost} RUB`;
-            elements.autoUpgrade.disabled = gameState.coins < nextAutoUpgradeCost;
+            elements.autoUpgradeCost.textContent = `${nextAutoUpgradeCost} лайков`;
+            elements.autoUpgrade.disabled = gameState.likes < nextAutoUpgradeCost;
+            
+            const nextCritUpgradeCost = 200 * Math.pow(2, gameState.critUpgradeLevel);
+            elements.critUpgradeCost.textContent = `${nextCritUpgradeCost} лайков`;
+            elements.critUpgrade.disabled = gameState.likes < nextCritUpgradeCost;
+            
+            const nextUltraUpgradeCost = 500 * Math.pow(2, gameState.ultraUpgradeLevel);
+            elements.ultraUpgradeCost.textContent = `${nextUltraUpgradeCost} лайков`;
+            elements.ultraUpgrade.disabled = gameState.likes < nextUltraUpgradeCost;
         }
 
         // Setup event listeners
         function setupEventListeners() {
-            // Click attack
-            elements.clickArea.addEventListener('click', () => {
-                gameState.clicks++;
-                attackBoss(gameState.clickDamage);
+            // Like button
+            elements.likeButton.addEventListener('click', (e) => {
+                elements.likeSound.currentTime = 0;
+                elements.likeSound.play();
+                
+                gameState.totalLikes++;
+                
+                // Calculate damage with crit and ultra chances
+                let damage = gameState.likePower;
+                let isCrit = false;
+                let isUltra = false;
+                
+                if (Math.random() * 100 < gameState.critChance) {
+                    damage *= gameState.critMultiplier;
+                    isCrit = true;
+                }
+                
+                if (Math.random() * 100 < gameState.ultraChance) {
+                    damage *= 5;
+                    isUltra = true;
+                }
+                
+                // Create easter egg
+                createEasterEgg(e.clientX, e.clientY);
+                
+                // Special effects for crits and ultras
+                if (isUltra) {
+                    elements.likeButton.style.backgroundColor = "#FF0000";
+                    elements.likeButton.style.boxShadow = "0 5px 0 #8B0000";
+                    setTimeout(() => {
+                        elements.likeButton.style.backgroundColor = "#FF69B4";
+                        elements.likeButton.style.boxShadow = "0 5px 0 #FF1493";
+                    }, 200);
+                    
+                    // Create multiple easter eggs
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            createEasterEgg(
+                                e.clientX + Math.random() * 100 - 50,
+                                e.clientY + Math.random() * 100 - 50
+                            );
+                        }, i * 100);
+                    }
+                } else if (isCrit) {
+                    elements.likeButton.style.backgroundColor = "#FF8C00";
+                    elements.likeButton.style.boxShadow = "0 5px 0 #FF4500";
+                    setTimeout(() => {
+                        elements.likeButton.style.backgroundColor = "#FF69B4";
+                        elements.likeButton.style.boxShadow = "0 5px 0 #FF1493";
+                    }, 200);
+                }
+                
+                attackBoss(damage);
             });
             
             // Click upgrade
             elements.clickUpgrade.addEventListener('click', () => {
                 const cost = 50 * Math.pow(2, gameState.clickUpgradeLevel);
-                if (gameState.coins >= cost) {
-                    gameState.coins -= cost;
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
                     gameState.clickUpgradeLevel++;
-                    gameState.clickDamage += 1;
+                    gameState.likePower += 1;
                     updateUI();
                     saveGame();
                 }
@@ -354,37 +537,112 @@
             // Auto upgrade
             elements.autoUpgrade.addEventListener('click', () => {
                 const cost = 100 * Math.pow(2, gameState.autoUpgradeLevel);
-                if (gameState.coins >= cost) {
-                    gameState.coins -= cost;
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
                     gameState.autoUpgradeLevel++;
-                    gameState.autoDamage += 1;
+                    gameState.autoLikes += 1;
                     updateUI();
                     saveGame();
                 }
             });
             
-            // Ad button (placeholder)
-            document.querySelector('.ad-button').addEventListener('click', () => {
-                // In a real Telegram Mini App, this would show an ad
-                alert("Здесь была бы реклама. В награду вы получаете 50 RUB!");
-                gameState.coins += 50;
+            // Crit upgrade
+            elements.critUpgrade.addEventListener('click', () => {
+                const cost = 200 * Math.pow(2, gameState.critUpgradeLevel);
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
+                    gameState.critUpgradeLevel++;
+                    gameState.critChance += 5;
+                    if (gameState.critUpgradeLevel % 3 === 0) {
+                        gameState.critMultiplier += 0.5;
+                    }
+                    updateUI();
+                    saveGame();
+                }
+            });
+            
+            // Ultra upgrade
+            elements.ultraUpgrade.addEventListener('click', () => {
+                const cost = 500 * Math.pow(2, gameState.ultraUpgradeLevel);
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
+                    gameState.ultraUpgradeLevel++;
+                    gameState.ultraChance += 2;
+                    updateUI();
+                    saveGame();
+                }
+            });
+            
+            // Music control
+            elements.musicControl.addEventListener('click', () => {
+                gameState.musicEnabled = !gameState.musicEnabled;
+                if (gameState.musicEnabled) {
+                    elements.backgroundMusic.play();
+                    elements.musicControl.textContent = "🔊";
+                } else {
+                    elements.backgroundMusic.pause();
+                    elements.musicControl.textContent = "🔇";
+                }
+                saveGame();
+            });
+            
+            // Secret button (easter egg)
+            elements.secretButton.addEventListener('click', () => {
+                elements.easterEggSound.play();
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => {
+                        createEasterEgg(
+                            Math.random() * window.innerWidth,
+                            Math.random() * window.innerHeight
+                        );
+                    }, i * 100);
+                }
+                
+                // Bonus likes
+                gameState.likes += 100;
+                gameState.totalLikes += 100;
                 updateUI();
                 saveGame();
+            });
+            
+            // Easter egg for clicking boss image
+            elements.bossImage.addEventListener('click', () => {
+                if (Math.random() > 0.9) { // 10% chance
+                    elements.easterEggSound.play();
+                    createEasterEgg(
+                        Math.random() * window.innerWidth,
+                        Math.random() * window.innerHeight
+                    );
+                    
+                    // Small bonus
+                    gameState.likes += 5;
+                    gameState.totalLikes += 5;
+                    updateUI();
+                    saveGame();
+                }
             });
         }
 
         // Save game to localStorage
         function saveGame() {
-            localStorage.setItem('clickerGame', JSON.stringify(gameState));
+            localStorage.setItem('likeGame', JSON.stringify(gameState));
         }
 
         // Load game from localStorage
         function loadGame() {
-            const savedGame = localStorage.getItem('clickerGame');
+            const savedGame = localStorage.getItem('likeGame');
             if (savedGame) {
                 const parsed = JSON.parse(savedGame);
                 Object.assign(gameState, parsed);
                 updateBossInfo();
+                
+                // Restore music state
+                if (gameState.musicEnabled) {
+                    elements.musicControl.textContent = "🔊";
+                } else {
+                    elements.musicControl.textContent = "🔇";
+                    elements.backgroundMusic.pause();
+                }
             }
         }
 

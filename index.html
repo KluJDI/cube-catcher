@@ -1,967 +1,1037 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Лови Мемы с Бомбами!</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: url('https://i.ytimg.com/vi/1qiuIpSqkfo/maxresdefault.jpg') no-repeat center center fixed;
-      background-size: cover;
-      color: white;
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-      touch-action: manipulation;
-      height: 100%;
-    }
-    canvas {
-      display: block;
-    }
-    #ui {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 10;
-    }
-    #score {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 28px;
-      font-weight: bold;
-      text-shadow: 2px 2px 0 #000, -2px -2px 0 #000;
-      background: rgba(0,0,0,0.5);
-      padding: 10px 20px;
-      border-radius: 20px;
-      border: 3px dashed yellow;
-    }
-    #lives {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      font-size: 28px;
-      font-weight: bold;
-      text-shadow: 2px 2px 0 #000;
-      background: rgba(0,0,0,0.5);
-      padding: 10px 15px;
-      border-radius: 20px;
-      border: 3px solid red;
-    }
-    #start-screen, #game-over {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: rgba(0,0,0,0.7);
-      z-index: 20;
-      text-align: center;
-    }
-    h1 {
-      font-size: 3em;
-      margin-bottom: 20px;
-      text-shadow: 3px 3px 0 #ff00cc, -3px -3px 0 #00ccff;
-      color: #ffff00;
-      animation: rainbow 2s infinite;
-    }
-    @keyframes rainbow {
-      0% { color: #ff0000; }
-      14% { color: #ff7f00; }
-      28% { color: #ffff00; }
-      42% { color: #00ff00; }
-      57% { color: #0000ff; }
-      71% { color: #4b0082; }
-      85% { color: #9400d3; }
-      100% { color: #ff0000; }
-    }
-    button {
-      background: linear-gradient(to bottom, #ff00cc, #00ccff);
-      border: none;
-      color: white;
-      padding: 15px 30px;
-      font-size: 1.5em;
-      border-radius: 50px;
-      cursor: pointer;
-      pointer-events: auto;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-      transition: transform 0.3s, box-shadow 0.3s;
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-      font-weight: bold;
-      text-transform: uppercase;
-      margin-top: 30px;
-      border: 3px solid white;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-    button:hover {
-      transform: scale(1.1) rotate(5deg);
-      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-    }
-    button:active {
-      transform: scale(0.9) rotate(-5deg);
-    }
-    #game-over {
-      display: none;
-    }
-    #final-score {
-      font-size: 2.5em;
-      margin: 30px 0;
-      text-shadow: 2px 2px 0 #000;
-      color: #00ff00;
-      animation: bounce 0.5s infinite alternate;
-    }
-    @keyframes bounce {
-      from { transform: scale(1); }
-      to { transform: scale(1.1); }
-    }
-    #instructions {
-      max-width: 80%;
-      text-align: center;
-      margin-bottom: 30px;
-      line-height: 1.6;
-      font-size: 1.2em;
-      text-shadow: 1px 1px 0 #000;
-      color: #ffff00;
-    }
-    #high-score {
-      position: absolute;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.5em;
-      font-weight: bold;
-      text-shadow: 2px 2px 0 #000;
-      background: rgba(0,0,0,0.5);
-      padding: 10px 20px;
-      border-radius: 15px;
-      border: 2px dotted white;
-    }
-    .meme-text {
-      position: absolute;
-      font-size: 24px;
-      font-weight: bold;
-      text-shadow: 2px 2px 0 #000;
-      pointer-events: none;
-      animation: float-up 3s forwards;
-    }
-    @keyframes float-up {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-100px); opacity: 0; }
-    }
-    .explosion {
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      pointer-events: none;
-      background: radial-gradient(circle, rgba(255,100,0,0.8) 0%, rgba(255,0,0,0) 70%);
-      border-radius: 50%;
-      transform: scale(0);
-      animation: explode 0.5s forwards;
-    }
-    @keyframes explode {
-      to { transform: scale(3); opacity: 0; }
-    }
-    #music-toggle {
-      transition: all 0.3s ease;
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      z-index: 30;
-      font-size: 24px;
-      background: rgba(0,0,0,0.5);
-      border: 2px solid white;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #music-toggle:hover {
-      transform: scale(1.1);
-      background: rgba(0,0,0,0.7) !important;
-    }
-    #leaderboard {
-      position: absolute;
-      top: 120px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
-      border-radius: 15px;
-      padding: 15px;
-      width: 80%;
-      max-width: 400px;
-      max-height: 300px;
-      overflow-y: auto;
-      display: none;
-      z-index: 25;
-      border: 2px solid #ff00cc;
-    }
-    #leaderboard h2 {
-      color: #ffff00;
-      text-align: center;
-      margin-top: 0;
-    }
-    #leaderboard table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    #leaderboard th, #leaderboard td {
-      padding: 8px;
-      text-align: left;
-      border-bottom: 1px solid #444;
-    }
-    #leaderboard th {
-      color: #00ccff;
-    }
-    #leaderboard tr:nth-child(even) {
-      background: rgba(255,255,255,0.1);
-    }
-    #leaderboard-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(0,0,0,0.5);
-      border: 2px solid white;
-      color: white;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 30;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .tg-avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      margin-right: 10px;
-      vertical-align: middle;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Упоротый Лайкер Боссов</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap');
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            max-width: 100%;
+            margin: 0;
+            padding: 10px;
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+            background-size: 400% 400%;
+            animation: rainbow 10s ease infinite;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        @keyframes rainbow {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 15px;
+            border: 3px dashed yellow;
+        }
+        
+        .likes {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FF69B4;
+            text-shadow: 3px 3px 0 #000;
+            animation: pulse 0.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+        
+        .boss-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            flex-grow: 1;
+            position: relative;
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 15px;
+            border: 4px dotted #fff;
+        }
+        
+        .boss-image {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            border: 5px solid #fff;
+            border-radius: 50%;
+            background-color: #000;
+            box-shadow: 0 0 20px #ff00ff;
+            transition: all 0.3s;
+        }
+        
+        .boss-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+            color: #fff;
+            text-shadow: 3px 3px 0 #000;
+        }
+        
+        .boss-hp {
+            width: 100%;
+            height: 30px;
+            background-color: #000;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 0 10px red;
+        }
+        
+        .boss-hp-fill {
+            height: 100%;
+            background: linear-gradient(to right, #ff0000, #ffff00);
+            width: 100%;
+            transition: width 0.3s;
+        }
+        
+        .like-button {
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, #FF69B4, #FF1493);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            user-select: none;
+            cursor: pointer;
+            box-shadow: 0 10px 0 #8B008B, 0 0 20px #FF69B4;
+            transition: transform 0.1s;
+            border: none;
+            color: white;
+            text-shadow: 2px 2px 0 #000;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .like-button:active {
+            transform: scale(0.9) rotate(360deg);
+            box-shadow: 0 5px 0 #8B008B, 0 0 30px #FF69B4;
+        }
+        
+        .like-icon {
+            font-size: 80px;
+            transform: rotate(0deg);
+            transition: transform 0.5s;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background-color: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 15px;
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 15px #00ffff;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 10px;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+        }
+        
+        .upgrades {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .upgrade {
+            background: linear-gradient(45deg, #9b59b6, #3498db);
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px #9b59b6;
+        }
+        
+        .upgrade-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 18px;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+        }
+        
+        .upgrade-cost {
+            color: #FFD700;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 0 #000;
+        }
+        
+        .upgrade-button {
+            background: linear-gradient(to bottom, #27ae60, #2ecc71);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #000;
+            box-shadow: 0 3px 0 #1e8449;
+            transition: all 0.2s;
+        }
+        
+        .upgrade-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 #1e8449;
+        }
+        
+        .upgrade-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 #1e8449;
+        }
+        
+        .upgrade-button:disabled {
+            background: linear-gradient(to bottom, #555, #777);
+            box-shadow: 0 3px 0 #333;
+            cursor: not-allowed;
+        }
+        
+        .easter-egg {
+            position: absolute;
+            font-size: 30px;
+            opacity: 0;
+            pointer-events: none;
+            animation: float-up 2s forwards, rotate 2s linear infinite;
+            z-index: 100;
+            filter: drop-shadow(0 0 5px #fff);
+        }
+        
+        @keyframes float-up {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-200px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .secret-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        
+        .secret-button::after {
+            content: "🤫";
+            font-size: 30px;
+            position: absolute;
+            opacity: 0.3;
+            transition: all 0.3s;
+        }
+        
+        .secret-button:hover::after {
+            opacity: 1;
+            transform: scale(1.5);
+        }
+        
+        .music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 0 10px #000;
+            transition: all 0.3s;
+        }
+        
+        .music-control:hover {
+            transform: scale(1.2);
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .crazy-mode {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #ff0000;
+            border: 3px dashed #fff;
+            border-radius: 10px;
+            padding: 5px 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 0 15px #ff0000;
+            animation: crazyButton 0.5s infinite alternate;
+        }
+        
+        @keyframes crazyButton {
+            from { transform: rotate(-5deg); }
+            to { transform: rotate(5deg); }
+        }
+        
+        .meme-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            border: 5px solid #000;
+            box-shadow: 0 0 30px #fff;
+            z-index: 2000;
+            display: none;
+            max-width: 80%;
+            text-align: center;
+        }
+        
+        .meme-popup img {
+            max-width: 100%;
+            max-height: 60vh;
+            border: 3px solid #000;
+        }
+        
+        .close-popup {
+            margin-top: 15px;
+            padding: 5px 15px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .achievement {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 3px solid #fff;
+            box-shadow: 0 0 15px #FFD700;
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.5s forwards;
+            color: #000;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        
+        .cat {
+            position: absolute;
+            font-size: 30px;
+            animation: catWalk 10s linear infinite;
+            z-index: 50;
+            pointer-events: none;
+        }
+        
+        @keyframes catWalk {
+            0% { transform: translateX(-100px) rotateY(180deg); }
+            100% { transform: translateX(calc(100vw + 100px)) rotateY(180deg); }
+        }
+    </style>
 </head>
 <body>
-<div id="ui">
-  <div id="score">0 МЕМОВ</div>
-  <div id="lives">❤️❤️❤️</div>
-  <div id="high-score">Рекорд: 0</div>
-</div>
-
-<button id="leaderboard-btn">🏆</button>
-<div id="leaderboard">
-  <h2>Таблица лидеров</h2>
-  <table id="leaderboard-table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Игрок</th>
-        <th>Рекорд</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-
-<div id="start-screen">
-  <h1>ЛОВИ МЕМЫ!</h1>
-  <div id="instructions">
-    Лови падающие мемы ведром!<br>
-    Избегай бомб - они отнимают жизни!<br>
-    Чем реже мем - тем больше очков!<br>
-    <span style="font-size: 0.8em;">(Просто двигай пальцем/мышкой)</span>
-  </div>
-  <button id="start-btn">ПОГНАЛИ!</button>
-</div>
-
-<div id="game-over">
-  <h1>КОНЕЦ ИГРЫ</h1>
-  <div id="final-score">Поймано: 0 мемов</div>
-  <button id="restart-btn">ЕЩЁ РАЗ!</button>
-</div>
-
-<canvas id="gameCanvas"></canvas>
-
-<script>
-  // Game elements
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  const scoreElement = document.getElementById('score');
-  const livesElement = document.getElementById('lives');
-  const highScoreElement = document.getElementById('high-score');
-  const startScreen = document.getElementById('start-screen');
-  const gameOverScreen = document.getElementById('game-over');
-  const finalScoreElement = document.getElementById('final-score');
-  const startBtn = document.getElementById('start-btn');
-  const restartBtn = document.getElementById('restart-btn');
-  
-  // Game state
-  let score = 0;
-  let lives = 3;
-  let highScore = localStorage.getItem('memeHighScore') || 0;
-  let gameRunning = false;
-  let animationFrameId;
-  let lastSpawnTime = 0;
-
-  // Leaderboard
-  let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-  const leaderboardBtn = document.getElementById('leaderboard-btn');
-  const leaderboardTable = document.getElementById('leaderboard-table');
-  const leaderboardElement = document.getElementById('leaderboard');
-
-  // Music
-  const backgroundMusic = new Audio('sounds/background-music.mp3');
-  backgroundMusic.loop = true;
-  backgroundMusic.volume = 0.3;
-  let isMusicPlaying = false;
-
-  // Music toggle button
-  const musicToggle = document.createElement('button');
-  musicToggle.id = 'music-toggle';
-  musicToggle.innerHTML = '🔇';
-  document.body.appendChild(musicToggle);
-
-  // Game objects
-  let bucket = { 
-    x: 200, 
-    y: 500, 
-    width: 100,
-    height: 80,
-    color: '#FF5722'
-  };
-  
-  let memes = [];
-  let bombs = [];
-  let memeImages = [];
-  let bombImage = new Image();
-  let particles = [];
-  let floatingTexts = [];
-  
-  // Sounds
-  const sounds = {
-    catch: new Audio('sounds/catch.mp3'),
-    bomb: new Audio('sounds/bomb.mp3'),
-    gameOver: new Audio('sounds/gameover.mp3'),
-    highScore: new Audio('sounds/highscore.mp3')
-  };
-  
-  // Meme types with different rarities
-  const memeTypes = [
-    { name: "Ждун", rarity: 1, points: 10 },
-    { name: "popcat", rarity: 1, points: 10 },
-    { name: "Дождь из мужиков", rarity: 2, points: 20 },
-    { name: "Серьёзный кот", rarity: 2, points: 20 },
-    { name: "Троллфейс", rarity: 3, points: 30 },
-    { name: "Йода", rarity: 3, points: 30 },
-    { name: "Доге", rarity: 4, points: 50 },
-    { name: "Pepe", rarity: 5, points: 100 },
-    { name: "Harold", rarity: 5, points: 100 },
-    { name: "Тун тун тун Сахур", rarity: 10, points: 200 }
-  ];
-  
-  // Load images
-  function loadImages() {
-    const memeUrls = [
-      'https://steamuserimages-a.akamaihd.net/ugc/90472493367987320/2F4D0894F18F0C96AA64DA536DB0445FF62DB709/?imw=512&amp;imh=685&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true',
-      'https://www.pngmart.com/files/23/Pop-Cat-PNG-Isolated-HD.png',
-      'https://cdna.artstation.com/p/assets/images/images/034/163/438/large/james-busby-big-image.jpg?1611582008',
-      'https://i.pinimg.com/originals/4b/dd/56/4bdd56ee84ddb2dc7b1aea998258930f.png',
-      'https://steamuserimages-a.akamaihd.net/ugc/1818895633364928244/3E8E8742F2A8764BFC6763E6D4357A7BFFC17423/?imw=512&amp;imh=412&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true',
-      'https://www.pngmart.com/files/12/Star-Wars-Master-Yoda-PNG-Transparent-Image.png',
-      'https://i.redd.it/vwyllr9wy8271.png',
-      'https://wallpapers.com/images/high/smug-pepe-the-frog-meme-i9skbogmokgpngux.png',
-      'https://i-a.d-cd.net/lxhiT1u6Y8GnXWwfhg0e-pAd5Y0-1920.jpg',
-      'https://tr.rbxcdn.com/180DAY-e7bf6d75c8753c56a2be9d55ec98fe47/420/420/Image/Png/noFilter'
-    ];
+    <button class="music-control" id="music-control">🔊</button>
+    <button class="crazy-mode" id="crazy-mode">УПОРОТЫЙ РЕЖИМ</button>
     
-    memeUrls.forEach(url => {
-      const img = new Image();
-      img.src = url;
-      memeImages.push(img);
-    });
+    <div class="header">
+        <div class="boss-level">Босс: 1</div>
+        <div class="likes" id="likes">0 лайков</div>
+    </div>
     
-    bombImage.src = 'https://www.pngplay.com/wp-content/uploads/6/Animated-Bomb-Transparent-Free-PNG.png';
-  }
-  
-  // Resize canvas
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    bucket.y = canvas.height - 100;
-    bucket.x = canvas.width / 2 - bucket.width / 2;
-  }
-  
-  // Update leaderboard
-  function updateLeaderboard() {
-    leaderboard.sort((a, b) => b.score - a.score);
-    if (leaderboard.length > 10) {
-      leaderboard = leaderboard.slice(0, 10);
-    }
-    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-    
-    const tbody = leaderboardTable.querySelector('tbody');
-    tbody.innerHTML = '';
-    
-    leaderboard.forEach((player, index) => {
-      const row = document.createElement('tr');
-      
-      const rankCell = document.createElement('td');
-      rankCell.textContent = index + 1;
-      
-      const nameCell = document.createElement('td');
-      if (player.photo) {
-        const img = document.createElement('img');
-        img.src = player.photo;
-        img.className = 'tg-avatar';
-        nameCell.appendChild(img);
-      }
-      nameCell.appendChild(document.createTextNode(player.name || 'Аноним'));
-      
-      const scoreCell = document.createElement('td');
-      scoreCell.textContent = player.score;
-      
-      row.appendChild(rankCell);
-      row.appendChild(nameCell);
-      row.appendChild(scoreCell);
-      tbody.appendChild(row);
-    });
-  }
-  
-  // Add player to leaderboard
-  function addToLeaderboard(score) {
-    let userData = {};
-    
-    if (window.Telegram && window.Telegram.WebApp) {
-      const tgUser = Telegram.WebApp.initDataUnsafe.user;
-      userData = {
-        id: tgUser.id,
-        name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username,
-        photo: tgUser.photo_url,
-        score: score
-      };
-    } else {
-      const userName = prompt('Поздравляем с новым рекордом! Введите ваше имя:', 'Аноним');
-      if (userName === null) return;
-      
-      userData = {
-        id: Date.now(),
-        name: userName,
-        score: score
-      };
-    }
-    
-    const existingPlayerIndex = leaderboard.findIndex(p => p.id === userData.id);
-    
-    if (existingPlayerIndex !== -1) {
-      if (score > leaderboard[existingPlayerIndex].score) {
-        leaderboard[existingPlayerIndex].score = score;
-      }
-    } else {
-      leaderboard.push(userData);
-    }
-    
-    updateLeaderboard();
-  }
-  
-  // Spawn meme
-  function spawnMeme() {
-    if (Math.random() < 0.2) {
-      spawnBomb();
-      return;
-    }
-    
-    let memeType;
-    const roll = Math.random() * 100;
-    
-    if (roll < 40) {
-      memeType = memeTypes[0];
-    } else if (roll < 70) {
-      memeType = memeTypes[1];
-    } else if (roll < 85) {
-      memeType = memeTypes[2];
-    } else if (roll < 95) {
-      memeType = memeTypes[3];
-    } else if (roll < 98) {
-      memeType = memeTypes[4];
-    } else {
-      memeType = memeTypes[Math.floor(Math.random() * memeTypes.length)];
-    }
-    
-    const size = 50 + Math.random() * 50;
-    const memeIndex = memeTypes.findIndex(m => m.name === memeType.name);
-    
-    memes.push({
-      x: Math.random() * (canvas.width - size),
-      y: -size,
-      width: size,
-      height: size,
-      speed: 2 + Math.random() * 3,
-      type: memeType,
-      rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.1,
-      wobble: Math.random() * 5,
-      wobbleSpeed: Math.random() * 0.1,
-      time: 0,
-      image: memeImages[memeIndex],
-      isBomb: false
-    });
-  }
-  
-  // Spawn bomb
-  function spawnBomb() {
-    const size = 60;
-    
-    bombs.push({
-      x: Math.random() * (canvas.width - size),
-      y: -size,
-      width: size,
-      height: size,
-      speed: 3 + Math.random() * 2,
-      rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.2,
-      time: 0,
-      image: bombImage,
-      isBomb: true
-    });
-  }
-  
-  // Create particles
-  function createParticles(x, y, color, count) {
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 5 + 2;
-      
-      particles.push({
-        x: x,
-        y: y,
-        size: Math.random() * 8 + 3,
-        color: color,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 30 + Math.random() * 30,
-        opacity: 1
-      });
-    }
-  }
-  
-  // Create explosion
-  function createExplosion(x, y) {
-    const explosion = document.createElement('div');
-    explosion.className = 'explosion';
-    explosion.style.left = `${x - 50}px`;
-    explosion.style.top = `${y - 50}px`;
-    document.body.appendChild(explosion);
-    
-    setTimeout(() => {
-      explosion.remove();
-    }, 500);
-    
-    sounds.bomb.play().catch(e => console.log("Sound error:", e));
-  }
-  
-  // Create floating text
-  function createFloatingText(text, x, y, color) {
-    floatingTexts.push({
-      text: text,
-      x: x,
-      y: y,
-      color: color,
-      life: 100
-    });
-  }
-  
-  // Draw bucket
-  function drawBucket() {
-    ctx.fillStyle = bucket.color;
-    ctx.beginPath();
-    ctx.moveTo(bucket.x, bucket.y);
-    ctx.lineTo(bucket.x + bucket.width, bucket.y);
-    ctx.lineTo(bucket.x + bucket.width - 20, bucket.y + bucket.height);
-    ctx.lineTo(bucket.x + 20, bucket.y + bucket.height);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.strokeStyle = '#FFC107';
-    ctx.lineWidth = 5;
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(bucket.x + 20, bucket.y + 10);
-    ctx.quadraticCurveTo(
-      bucket.x + bucket.width / 2, 
-      bucket.y - 30, 
-      bucket.x + bucket.width - 20, 
-      bucket.y + 10
-    );
-    ctx.stroke();
-  }
-  
-  // Update lives display
-  function updateLivesDisplay() {
-    livesElement.textContent = '❤️'.repeat(lives) + '♡'.repeat(3 - lives);
-    
-    livesElement.style.transform = 'scale(1.5)';
-    livesElement.style.color = 'red';
-    setTimeout(() => {
-      livesElement.style.transform = 'scale(1)';
-      livesElement.style.color = '';
-    }, 300);
-  }
-  
-  // Random color
-  function getRandomColor() {
-    const colors = [
-      '#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', 
-      '#9C27B0', '#FF9800', '#00BCD4', '#E91E63',
-      '#8BC34A', '#CDDC39', '#FFC107', '#FF5722'
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-  
-  // Game update
-  function update() {
-    const now = Date.now();
-    
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-    for (let i = 0; i < 50; i++) {
-      ctx.fillRect(
-        Math.random() * canvas.width,
-        Math.random() * canvas.height,
-        2, 2
-      );
-    }
-    
-    if (gameRunning && now - lastSpawnTime > 500 - Math.min(score, 500) / 3) {
-      spawnMeme();
-      lastSpawnTime = now;
-    }
-    
-    drawBucket();
-    
-    for (let i = memes.length - 1; i >= 0; i--) {
-      const meme = memes[i];
-      
-      meme.y += meme.speed;
-      meme.rotation += meme.rotationSpeed;
-      meme.time += 0.1;
-      meme.wobble = Math.sin(meme.time * meme.wobbleSpeed) * 5;
-      
-      ctx.save();
-      ctx.translate(meme.x + meme.width/2, meme.y + meme.height/2);
-      ctx.rotate(meme.rotation);
-      
-      if (meme.image && meme.image.complete) {
-        ctx.drawImage(
-          meme.image, 
-          -meme.width/2 + meme.wobble, 
-          -meme.height/2, 
-          meme.width, 
-          meme.height
-        );
-      } else {
-        ctx.fillStyle = getRandomColor();
-        ctx.fillRect(
-          -meme.width/2 + meme.wobble, 
-          -meme.height/2, 
-          meme.width, 
-          meme.height
-        );
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(
-          -meme.width/2 + meme.wobble, 
-          -meme.height/2, 
-          meme.width, 
-          meme.height
-        );
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 10px Arial';
-        ctx.fillText(
-          meme.type.name, 
-          -meme.width/2 + meme.wobble + 5, 
-          -meme.height/2 + 15
-        );
-      }
-      
-      ctx.restore();
-      
-      if (
-        meme.y + meme.height > bucket.y &&
-        meme.x + meme.width > bucket.x &&
-        meme.x < bucket.x + bucket.width &&
-        meme.y + meme.height < bucket.y + bucket.height
-      ) {
-        createParticles(
-          meme.x + meme.width/2, 
-          meme.y + meme.height/2, 
-          getRandomColor(), 
-          20
-        );
+    <div class="boss-container" id="boss-container">
+        <img src="images/boss1.png" alt="Босс" class="boss-image" id="boss-image">
+        <div class="boss-name" id="boss-name">Питеин Крипер</div>
+        <div class="boss-hp">
+            <div class="boss-hp-fill" id="boss-hp"></div>
+        </div>
         
-        createFloatingText(
-          `+${meme.type.points} ${meme.type.name.toUpperCase()}!`,
-          meme.x + meme.width/2,
-          meme.y,
-          getRandomColor()
-        );
+        <button class="like-button" id="like-button">
+            <span class="like-icon">❤️</span>
+        </button>
         
-        memes.splice(i, 1);
-        score += meme.type.points;
-        scoreElement.textContent = `${score} МЕМОВ`;
-        
-        scoreElement.style.transform = 'translateX(-50%) scale(1.3) rotate(5deg)';
-        setTimeout(() => {
-          scoreElement.style.transform = 'translateX(-50%) scale(1) rotate(0)';
-        }, 200);
-        
-        sounds.catch.play().catch(e => console.log("Sound error:", e));
-      } else if (meme.y > canvas.height + meme.height) {
-        memes.splice(i, 1);
-      }
-    }
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="total-likes">0</div>
+                <div class="stat-label">Всего лайков</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="lps">0</div>
+                <div class="stat-label">Лайков/сек</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="like-power">1</div>
+                <div class="stat-label">Сила лайка</div>
+            </div>
+        </div>
+    </div>
     
-    for (let i = bombs.length - 1; i >= 0; i--) {
-      const bomb = bombs[i];
-      
-      bomb.y += bomb.speed;
-      bomb.rotation += bomb.rotationSpeed;
-      bomb.time += 0.1;
-      
-      ctx.save();
-      ctx.translate(bomb.x + bomb.width/2, bomb.y + bomb.height/2);
-      ctx.rotate(bomb.rotation);
-      
-      if (bomb.image && bomb.image.complete) {
-        ctx.drawImage(
-          bomb.image, 
-          -bomb.width/2, 
-          -bomb.height/2, 
-          bomb.width, 
-          bomb.height
-        );
-      } else {
-        ctx.fillStyle = '#ff0000';
-        ctx.beginPath();
-        ctx.arc(0, 0, bomb.width/2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 12px Arial';
-        ctx.fillText('БОМБА', -20, 5);
-      }
-      
-      ctx.restore();
-      
-      if (
-        bomb.y + bomb.height > bucket.y &&
-        bomb.x + bomb.width > bucket.x &&
-        bomb.x < bucket.x + bucket.width &&
-        bomb.y + bomb.height < bucket.y + bucket.height
-      ) {
-        createExplosion(bomb.x + bomb.width/2, bomb.y + bomb.height/2);
-        bombs.splice(i, 1);
-        lives--;
-        updateLivesDisplay();
-        
-        if (lives <= 0) {
-          gameOver();
-        } else {
-          document.body.style.animation = 'shake 0.5s';
-          setTimeout(() => {
-            document.body.style.animation = '';
-          }, 500);
+    <div class="upgrades">
+        <div class="upgrade">
+            <div class="upgrade-name">Улучшить лайк</div>
+            <div class="upgrade-cost" id="click-upgrade-cost">50 лайков</div>
+            <button class="upgrade-button" id="click-upgrade">Купить</button>
+        </div>
+        <div class="upgrade">
+            <div class="upgrade-name">Авто-лайкер</div>
+            <div class="upgrade-cost" id="auto-upgrade-cost">100 лайков</div>
+            <button class="upgrade-button" id="auto-upgrade">Купить</button>
+        </div>
+        <div class="upgrade">
+            <div class="upgrade-name">Критический удар</div>
+            <div class="upgrade-cost" id="crit-upgrade-cost">200 лайков</div>
+            <button class="upgrade-button" id="crit-upgrade">Купить</button>
+        </div>
+        <div class="upgrade">
+            <div class="upgrade-name">Ультра-лайк</div>
+            <div class="upgrade-cost" id="ultra-upgrade-cost">500 лайков</div>
+            <button class="upgrade-button" id="ultra-upgrade">Купить</button>
+        </div>
+        <div class="upgrade">
+            <div class="upgrade-name">Мемный буст</div>
+            <div class="upgrade-cost" id="meme-upgrade-cost">1000 лайков</div>
+            <button class="upgrade-button" id="meme-upgrade">Купить</button>
+        </div>
+        <div class="upgrade">
+            <div class="upgrade-name">ДДОС-атака</div>
+            <div class="upgrade-cost" id="ddos-upgrade-cost">5000 лайков</div>
+            <button class="upgrade-button" id="ddos-upgrade">Купить</button>
+        </div>
+    </div>
+    
+    <div class="secret-button" id="secret-button"></div>
+    <div class="achievement" id="achievement"></div>
+    <div class="meme-popup" id="meme-popup">
+        <img id="meme-image" src="">
+        <button class="close-popup" id="close-popup">Закрыть</button>
+    </div>
+
+    <audio id="background-music" loop>
+        <source src="sounds/background-music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="like-sound">
+        <source src="sounds/like-sound.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="boss-defeated">
+        <source src="sounds/boss-defeated.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="easter-egg-sound">
+        <source src="sounds/easter-egg.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="crazy-sound">
+        <source src="sounds/crazy-mode.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="meme-sound">
+        <source src="sounds/meme-sound.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Game state
+        const gameState = {
+            likes: 0,
+            totalLikes: 0,
+            bossHp: 100,
+            maxBossHp: 100,
+            bossLevel: 1,
+            likePower: 1,
+            autoLikes: 0,
+            critChance: 0,
+            critMultiplier: 2,
+            ultraChance: 0,
+            memeMultiplier: 1,
+            ddosPower: 0,
+            autoUpgradeLevel: 0,
+            clickUpgradeLevel: 0,
+            critUpgradeLevel: 0,
+            ultraUpgradeLevel: 0,
+            memeUpgradeLevel: 0,
+            ddosUpgradeLevel: 0,
+            bosses: [
+                { name: "Питеин Крипер", image: "images/boss1.png" },
+                { name: "Зюзель", image: "images/boss2.png" },
+                { name: "Монстр 404", image: "images/boss3.png" },
+                { name: "Король Лайков", image: "images/boss4.png" },
+                { name: "Лайко-Дракон", image: "images/boss5.png" },
+                { name: "Финальный Босс", image: "images/boss6.png" },
+                { name: "УПОРОТЫЙ БОСС", image: "images/boss7.png" }
+            ],
+            memes: [
+                "images/meme1.jpg",
+                "images/meme2.jpg",
+                "images/meme3.jpg",
+                "images/meme4.jpg"
+            ],
+            easterEggs: [
+                "❤️", "💖", "💕", "💘", "💝", "💗", "💓", "💞", "💟", "😍",
+                "🔥", "🌟", "✨", "🎉", "👍", "👑", "💎", "🤑", "🤩", "🥳",
+                "🐱", "🐶", "🦄", "🍕", "🍔", "🍟", "🎮", "👾", "🤡", "👻"
+            ],
+            musicEnabled: true,
+            crazyMode: false,
+            achievements: [
+                { id: "first_like", name: "Первый лайк!", condition: (game) => game.totalLikes >= 1 },
+                { id: "boss1", name: "Первый босс повержен!", condition: (game) => game.bossLevel >= 2 },
+                { id: "100_likes", name: "100 лайков!", condition: (game) => game.totalLikes >= 100 },
+                { id: "crazy_mode", name: "Упоротый режим!", condition: (game) => game.crazyMode },
+                { id: "meme_lord", name: "Повелитель мемов!", condition: (game) => game.memeUpgradeLevel >= 5 }
+            ],
+            unlockedAchievements: []
+        };
+
+        // DOM elements
+        const elements = {
+            likes: document.getElementById('likes'),
+            bossHp: document.getElementById('boss-hp'),
+            bossLevel: document.querySelector('.boss-level'),
+            bossName: document.getElementById('boss-name'),
+            bossImage: document.getElementById('boss-image'),
+            bossContainer: document.getElementById('boss-container'),
+            likeButton: document.getElementById('like-button'),
+            totalLikes: document.getElementById('total-likes'),
+            lps: document.getElementById('lps'),
+            likePower: document.getElementById('like-power'),
+            clickUpgrade: document.getElementById('click-upgrade'),
+            autoUpgrade: document.getElementById('auto-upgrade'),
+            critUpgrade: document.getElementById('crit-upgrade'),
+            ultraUpgrade: document.getElementById('ultra-upgrade'),
+            memeUpgrade: document.getElementById('meme-upgrade'),
+            ddosUpgrade: document.getElementById('ddos-upgrade'),
+            clickUpgradeCost: document.getElementById('click-upgrade-cost'),
+            autoUpgradeCost: document.getElementById('auto-upgrade-cost'),
+            critUpgradeCost: document.getElementById('crit-upgrade-cost'),
+            ultraUpgradeCost: document.getElementById('ultra-upgrade-cost'),
+            memeUpgradeCost: document.getElementById('meme-upgrade-cost'),
+            ddosUpgradeCost: document.getElementById('ddos-upgrade-cost'),
+            musicControl: document.getElementById('music-control'),
+            backgroundMusic: document.getElementById('background-music'),
+            likeSound: document.getElementById('like-sound'),
+            bossDefeated: document.getElementById('boss-defeated'),
+            easterEggSound: document.getElementById('easter-egg-sound'),
+            crazySound: document.getElementById('crazy-sound'),
+            memeSound: document.getElementById('meme-sound'),
+            secretButton: document.getElementById('secret-button'),
+            achievement: document.getElementById('achievement'),
+            memePopup: document.getElementById('meme-popup'),
+            memeImage: document.getElementById('meme-image'),
+            closePopup: document.getElementById('close-popup'),
+            crazyModeButton: document.getElementById('crazy-mode')
+        };
+
+        // Initialize the game
+        function initGame() {
+            loadGame();
+            updateUI();
+            setupEventListeners();
+            
+            // Start game loop
+            setInterval(gameLoop, 1000);
+            
+            // Try to play music
+            elements.backgroundMusic.volume = 0.3;
+            if (gameState.musicEnabled) {
+                elements.backgroundMusic.play().catch(e => {
+                    console.log("Автовоспроизведение музыки заблокировано");
+                    gameState.musicEnabled = false;
+                    elements.musicControl.textContent = "🔇";
+                });
+            }
+            
+            // Start crazy mode if enabled
+            if (gameState.crazyMode) {
+                enableCrazyMode();
+            }
         }
-      } else if (bomb.y > canvas.height + bomb.height) {
-        bombs.splice(i, 1);
-      }
+
+        // Game loop
+        function gameLoop() {
+            // Auto likes
+            if (gameState.autoLikes > 0) {
+                const autoLikes = gameState.autoLikes * gameState.memeMultiplier + gameState.ddosPower;
+                gameState.likes += autoLikes;
+                gameState.totalLikes += autoLikes;
+                
+                // Auto attack
+                attackBoss(autoLikes);
+            }
+            
+            // Check achievements
+            checkAchievements();
+            
+            updateUI();
+            saveGame();
+        }
+
+        // Attack boss
+        function attackBoss(damage) {
+            gameState.bossHp -= damage;
+            
+            if (gameState.bossHp <= 0) {
+                // Boss defeated
+                elements.bossDefeated.play();
+                gameState.likes += Math.floor(gameState.maxBossHp * 0.2);
+                gameState.bossLevel++;
+                
+                // Increase boss HP for next level
+                gameState.maxBossHp = Math.floor(gameState.maxBossHp * 1.8);
+                gameState.bossHp = gameState.maxBossHp;
+                
+                // Shake boss image
+                elements.bossImage.style.transform = "scale(1.3) rotate(10deg)";
+                setTimeout(() => {
+                    elements.bossImage.style.transform = "scale(1) rotate(0deg)";
+                }, 300);
+                
+                // Random meme chance
+                if (Math.random() < 0.3 && gameState.memeUpgradeLevel > 0) {
+                    showRandomMeme();
+                }
+                
+                // Update boss info
+                updateBossInfo();
+            }
+            
+            updateUI();
+            saveGame();
+        }
+
+        // Update boss info based on level
+        function updateBossInfo() {
+            const bossIndex = Math.min(gameState.bossLevel - 1, gameState.bosses.length - 1);
+            const boss = gameState.bosses[bossIndex];
+            
+            elements.bossName.textContent = boss.name;
+            elements.bossImage.src = boss.image;
+            
+            // Special effect for final boss
+            if (bossIndex === gameState.bosses.length - 1) {
+                elements.bossImage.style.boxShadow = "0 0 30px #ff0000";
+                elements.bossName.style.color = "#ff0000";
+                elements.bossName.style.textShadow = "3px 3px 0 #000";
+            } else {
+                elements.bossImage.style.boxShadow = "0 0 20px #ff00ff";
+                elements.bossName.style.color = "#fff";
+            }
+        }
+
+        // Create easter egg animation
+        function createEasterEgg(x, y) {
+            const egg = document.createElement('div');
+            egg.className = 'easter-egg';
+            egg.textContent = gameState.easterEggs[Math.floor(Math.random() * gameState.easterEggs.length)];
+            egg.style.left = `${x}px`;
+            egg.style.top = `${y}px`;
+            
+            // Random size
+            const size = Math.random() * 20 + 20;
+            egg.style.fontSize = `${size}px`;
+            
+            elements.bossContainer.appendChild(egg);
+            
+            setTimeout(() => {
+                egg.remove();
+            }, 2000);
+        }
+
+        // Show random meme
+        function showRandomMeme() {
+            if (gameState.memes.length === 0) return;
+            
+            const randomMeme = gameState.memes[Math.floor(Math.random() * gameState.memes.length)];
+            elements.memeImage.src = randomMeme;
+            elements.memePopup.style.display = "block";
+            elements.memeSound.play();
+            
+            // Pause game
+            clearInterval(gameLoop);
+        }
+
+        // Check for new achievements
+        function checkAchievements() {
+            gameState.achievements.forEach(achievement => {
+                if (!gameState.unlockedAchievements.includes(achievement.id) && 
+                    achievement.condition(gameState)) {
+                    
+                    gameState.unlockedAchievements.push(achievement.id);
+                    showAchievement(achievement.name);
+                }
+            });
+        }
+
+        // Show achievement notification
+        function showAchievement(name) {
+            elements.achievement.textContent = `Достижение: ${name}`;
+            elements.achievement.style.display = "block";
+            
+            setTimeout(() => {
+                elements.achievement.style.display = "none";
+            }, 3000);
+        }
+
+        // Enable crazy mode
+        function enableCrazyMode() {
+            gameState.crazyMode = true;
+            elements.crazyModeButton.textContent = "УПОРОТЫЙ РЕЖИМ АКТИВЕН!";
+            elements.crazyModeButton.style.animation = "crazyButton 0.1s infinite alternate";
+            elements.crazySound.loop = true;
+            elements.crazySound.play();
+            
+            // Add flying cats
+            setInterval(() => {
+                const cat = document.createElement('div');
+                cat.className = 'cat';
+                cat.textContent = '🐱';
+                cat.style.top = `${Math.random() * window.innerHeight}px`;
+                cat.style.animationDuration = `${Math.random() * 5 + 5}s`;
+                document.body.appendChild(cat);
+                
+                setTimeout(() => {
+                    cat.remove();
+                }, 10000);
+            }, 1000);
+        }
+
+        // Update UI
+        function updateUI() {
+            // Update likes
+            elements.likes.textContent = `${gameState.likes} лайков`;
+            elements.totalLikes.textContent = gameState.totalLikes;
+            
+            // Update boss HP
+            const hpPercent = (gameState.bossHp / gameState.maxBossHp) * 100;
+            elements.bossHp.style.width = `${hpPercent}%`;
+            
+            // Update boss level
+            elements.bossLevel.textContent = `Босс: ${gameState.bossLevel}`;
+            
+            // Update stats
+            elements.lps.textContent = gameState.autoLikes * gameState.memeMultiplier + gameState.ddosPower;
+            elements.likePower.textContent = gameState.likePower * gameState.memeMultiplier;
+            
+            // Update upgrade costs and availability
+            const nextClickUpgradeCost = 50 * Math.pow(2, gameState.clickUpgradeLevel);
+            elements.clickUpgradeCost.textContent = `${nextClickUpgradeCost} лайков`;
+            elements.clickUpgrade.disabled = gameState.likes < nextClickUpgradeCost;
+            
+            const nextAutoUpgradeCost = 100 * Math.pow(2, gameState.autoUpgradeLevel);
+            elements.autoUpgradeCost.textContent = `${nextAutoUpgradeCost} лайков`;
+            elements.autoUpgrade.disabled = gameState.likes < nextAutoUpgradeCost;
+            
+            const nextCritUpgradeCost = 200 * Math.pow(2, gameState.critUpgradeLevel);
+            elements.critUpgradeCost.textContent = `${nextCritUpgradeCost} лайков`;
+            elements.critUpgrade.disabled = gameState.likes < nextCritUpgradeCost;
+            
+            const nextUltraUpgradeCost = 500 * Math.pow(2, gameState.ultraUpgradeLevel);
+            elements.ultraUpgradeCost.textContent = `${nextUltraUpgradeCost} лайков`;
+            elements.ultraUpgrade.disabled = gameState.likes < nextUltraUpgradeCost;
+            
+            const nextMemeUpgradeCost = 1000 * Math.pow(2, gameState.memeUpgradeLevel);
+            elements.memeUpgradeCost.textContent = `${nextMemeUpgradeCost} лайков`;
+            elements.memeUpgrade.disabled = gameState.likes < nextMemeUpgradeCost;
+            
+            const nextDdosUpgradeCost = 5000 * Math.pow(2, gameState.ddosUpgradeLevel);
+            elements.ddosUpgradeCost.textContent = `${nextDdosUpgradeCost} лайков`;
+            elements.ddosUpgrade.disabled = gameState.likes < nextDdosUpgradeCost;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Like button
+            elements.likeButton.addEventListener('click', (e) => {
+                elements.likeSound.currentTime = 0;
+                elements.likeSound.play();
+                
+                gameState.totalLikes++;
+                
+                // Calculate damage with crit and ultra chances
+                let damage = gameState.likePower * gameState.memeMultiplier;
+                let isCrit = false;
+                let isUltra = false;
+                
+                if (Math.random() * 100 < gameState.critChance) {
+                    damage *= gameState.critMultiplier;
+                    isCrit = true;
+                }
+                
+                if (Math.random() * 100 < gameState.ultraChance) {
+                    damage *= 5;
+                    isUltra = true;
+                }
+                
+                // Create easter egg
+                createEasterEgg(e.clientX, e.clientY);
+                
+                // Special effects for crits and ultras
+                if (isUltra) {
+                    elements.likeButton.style.background = "radial-gradient(circle, #FF0000, #8B0000)";
+                    elements.likeButton.style.boxShadow = "0 10px 0 #8B0000, 0 0 30px #FF0000";
+                    setTimeout(() => {
+                        elements.likeButton.style.background = "radial-gradient(circle, #FF69B4, #FF1493)";
+                        elements.likeButton.style.boxShadow = "0 10px 0 #8B008B, 0 0 20px #FF69B4";
+                    }, 200);
+                    
+                    // Create multiple easter eggs
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            createEasterEgg(
+                                e.clientX + Math.random() * 100 - 50,
+                                e.clientY + Math.random() * 100 - 50
+                            );
+                        }, i * 100);
+                    }
+                } else if (isCrit) {
+                    elements.likeButton.style.background = "radial-gradient(circle, #FF8C00, #FF4500)";
+                    elements.likeButton.style.boxShadow = "0 10px 0 #FF4500, 0 0 30px #FF8C00";
+                    setTimeout(() => {
+                        elements.likeButton.style.background = "radial-gradient(circle, #FF69B4, #FF1493)";
+                        elements.likeButton.style.boxShadow = "0 10px 0 #8B008B, 0 0 20px #FF69B4";
+                    }, 200);
+                }
+                
+                attackBoss(damage);
+            });
+            
+            // Click upgrade
+            elements.clickUpgrade.addEventListener('click', () => {
+                const cost = 50 * Math.pow(2, gameState.clickUpgradeLevel);
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
+                    gameState.clickUpgradeLevel++;
+                    gameState.likePower += 1;
+                    updateUI();
+                    saveGame();
+                }
+            });
+            
+            // Auto upgrade
+            elements.autoUpgrade.addEventListener('click', () => {
+                const cost = 100 * Math.pow(2, gameState.autoUpgradeLevel);
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
+                    gameState.autoUpgradeLevel++;
+                    gameState.autoLikes += 1;
+                    updateUI();
+                    saveGame();
+                }
+            });
+            
+            // Crit upgrade
+            elements.critUpgrade.addEventListener('click', () => {
+                const cost = 200 * Math.pow(2, gameState.critUpgradeLevel);
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
+                    gameState.critUpgradeLevel++;
+                    gameState.critChance += 5;
+                    if (gameState.critUpgradeLevel % 3 === 0) {
+                        gameState.critMultiplier += 0.5;
+                    }
+                    updateUI();
+                    saveGame();
+                }
+            });
+            
+            // Ultra upgrade
+            elements.ultraUpgrade.addEventListener('click', () => {
+                const cost = 500 * Math.pow(2, gameState.ultraUpgradeLevel);
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
+                    gameState.ultraUpgradeLevel++;
+                    gameState.ultraChance += 2;
+                    updateUI();
+                    saveGame();
+                }
+            });
+            
+            // Meme upgrade
+            elements.memeUpgrade.addEventListener('click', () => {
+                const cost = 1000 * Math.pow(2, gameState.memeUpgradeLevel);
+                if (gameState.likes >= cost) {
+                    gameState.likes -= cost;
+                    gameState.memeUpgradeLevel++;
+                    gameState.memeMultiplier += 0.5;
+                    updateUI();
+                    saveGame();
+                    
+                    // Show meme on first purchase
+                    if (gameState.memeUpgradeLevel === 1) {
+                        showRandomMeme();
+                    }
+                }
+            });
+            
+            // DDOS upgrade
+            elements.ddosUpgrade.addEventListener('click', () => {
+                const cost = 5000 * Math.pow(
+                    Math.pow(2, gameState.ddosUpgradeLevel))
+                    if (gameState.likes >= cost) {
+                        gameState.likes -= cost;
+                        gameState.ddosUpgradeLevel++;
+                        gameState.ddosPower += 10;
+                        updateUI();
+                        saveGame();
+                    }
+                });
+
+        // Music control
+        elements.musicControl.addEventListener('click', () => {
+            gameState.musicEnabled = !gameState.musicEnabled;
+            if (gameState.musicEnabled) {
+                elements.backgroundMusic.play();
+                elements.musicControl.textContent = "🔊";
+            } else {
+                elements.backgroundMusic.pause();
+                elements.musicControl.textContent = "🔇";
+            }
+            saveGame();
+        });
+        
+        // Crazy mode button
+        elements.crazyModeButton.addEventListener('click', () => {
+            if (!gameState.crazyMode) {
+                enableCrazyMode();
+                saveGame();
+            }
+        });
+        
+        // Secret button (easter egg)
+        elements.secretButton.addEventListener('click', () => {
+            elements.easterEggSound.play();
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    createEasterEgg(
+                        Math.random() * window.innerWidth,
+                        Math.random() * window.innerHeight
+                    );
+                }, i * 100);
+            }
+            
+            // Bonus likes
+            gameState.likes += 100;
+            gameState.totalLikes += 100;
+            updateUI();
+            saveGame();
+        });
+        
+        // Easter egg for clicking boss image
+        elements.bossImage.addEventListener('click', () => {
+            if (Math.random() > 0.9) { // 10% chance
+                elements.easterEggSound.play();
+                createEasterEgg(
+                    Math.random() * window.innerWidth,
+                    Math.random() * window.innerHeight
+                );
+                
+                // Small bonus
+                gameState.likes += 5;
+                gameState.totalLikes += 5;
+                updateUI();
+                saveGame();
+            }
+        });
+        
+        // Close meme popup
+        elements.closePopup.addEventListener('click', () => {
+            elements.memePopup.style.display = "none";
+            // Resume game
+            gameLoop = setInterval(gameLoop, 1000);
+        });
     }
-    
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.2;
-      p.life--;
-      p.opacity = p.life / 60;
-      
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.opacity;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-      
-      if (p.life <= 0) {
-        particles.splice(i, 1);
-      }
+
+    // Save game to localStorage
+    function saveGame() {
+        localStorage.setItem('likeGame', JSON.stringify(gameState));
     }
-    ctx.globalAlpha = 1;
-    
-    for (let i = floatingTexts.length - 1; i >= 0; i--) {
-      const text = floatingTexts[i];
-      
-      ctx.font = 'bold 24px Comic Sans MS';
-      ctx.fillStyle = text.color;
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 3;
-      ctx.strokeText(text.text, text.x, text.y);
-      ctx.fillText(text.text, text.x, text.y);
-      
-      text.y -= 2;
-      text.life--;
-      
-      if (text.life <= 0) {
-        floatingTexts.splice(i, 1);
-      }
+
+    // Load game from localStorage
+    function loadGame() {
+        const savedGame = localStorage.getItem('likeGame');
+        if (savedGame) {
+            const parsed = JSON.parse(savedGame);
+            Object.assign(gameState, parsed);
+            updateBossInfo();
+            
+            // Restore music state
+            if (gameState.musicEnabled) {
+                elements.musicControl.textContent = "🔊";
+            } else {
+                elements.musicControl.textContent = "🔇";
+                elements.backgroundMusic.pause();
+            }
+        }
     }
-    
-    if (gameRunning) {
-      animationFrameId = requestAnimationFrame(update);
-    }
-  }
-  
-  // Start game
-  function startGame() {
-    score = 0;
-    lives = 3;
-    scoreElement.textContent = `${score} МЕМОВ`;
-    updateLivesDisplay();
-    memes = [];
-    bombs = [];
-    particles = [];
-    floatingTexts = [];
-    gameRunning = true;
-    startScreen.style.display = 'none';
-    gameOverScreen.style.display = 'none';
-    lastSpawnTime = Date.now();
-    
-    if (localStorage.getItem('musicState') !== 'false') {
-      isMusicPlaying = true;
-      backgroundMusic.play().catch(e => console.log("Music error:", e));
-      musicToggle.innerHTML = '🔊';
-    }
-    
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => spawnMeme(), i * 500);
-    }
-    
-    update();
-  }
-  
-  // Game over
-  function gameOver() {
-    gameRunning = false;
-    finalScoreElement.textContent = `Поймано: ${score} мемов`;
-    gameOverScreen.style.display = 'flex';
-    
-    sounds.gameOver.play().catch(e => console.log("Sound error:", e));
-    
-    if (score > highScore) {
-      highScore = score;
-      localStorage.setItem('memeHighScore', highScore);
-      highScoreElement.textContent = `Рекорд: ${highScore}`;
-      
-      finalScoreElement.textContent = `НОВЫЙ РЕКОРД: ${highScore}!`;
-      finalScoreElement.style.animation = 'rainbow 0.5s infinite';
-      
-      sounds.highScore.play().catch(e => console.log("Sound error:", e));
-      
-      addToLeaderboard(highScore);
-    }
-    
-    cancelAnimationFrame(animationFrameId);
-  }
-  
-  // Event listeners
-  startBtn.addEventListener('click', startGame);
-  restartBtn.addEventListener('click', startGame);
-  
-  // Controls
-  function handleMove(x) {
-    if (!gameRunning) return;
-    
-    const targetX = Math.max(
-      bucket.width/2, 
-      Math.min(x - bucket.width/2, canvas.width - bucket.width/2)
-    );
-    bucket.x += (targetX - bucket.x) * 0.2;
-  }
-  
-  canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    handleMove(touch.clientX);
-  }, { passive: false });
-  
-  canvas.addEventListener('mousemove', e => {
-    handleMove(e.clientX);
-  });
-  
-  // Music toggle
-  musicToggle.addEventListener('click', () => {
-    isMusicPlaying = !isMusicPlaying;
-    if (isMusicPlaying) {
-      backgroundMusic.play().catch(e => console.log("Music error:", e));
-      musicToggle.innerHTML = '🔊';
-    } else {
-      backgroundMusic.pause();
-      musicToggle.innerHTML = '🔇';
-    }
-    localStorage.setItem('musicState', isMusicPlaying);
-  });
-  
-  // Leaderboard toggle
-  leaderboardBtn.addEventListener('click', () => {
-    const isVisible = leaderboardElement.style.display === 'block';
-    leaderboardElement.style.display = isVisible ? 'none' : 'block';
-  });
-  
-  // Initialize
-  loadImages();
-  resize();
-  updateLeaderboard();
-  
-  // Telegram integration
-  if (window.Telegram && window.Telegram.WebApp) {
-    Telegram.WebApp.expand();
-    Telegram.WebApp.enableClosingConfirmation();
-    
-    Telegram.WebApp.BackButton.onClick(() => {
-      if (gameRunning) {
-        gameOver();
-      } else {
-        Telegram.WebApp.close();
-      }
-    });
-    
-    const tgUser = Telegram.WebApp.initDataUnsafe.user;
-    if (tgUser) {
-      const userName = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username;
-      console.log(`Игрок: ${userName}`);
-    }
-  }
+
+    // Initialize the game when the page loads
+    window.addEventListener('DOMContentLoaded', initGame);
 </script>
-</body>
+</body> 
 </html>

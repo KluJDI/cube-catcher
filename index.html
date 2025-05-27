@@ -2,150 +2,966 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Кликер Крипера Наруто</title>
+  <title>Лови Мемы с Бомбами!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    body {
-      font-family: 'Comic Sans MS', cursive, sans-serif;
+    html, body {
       margin: 0;
-      background: url('https://i.imgur.com/OYVpe2W.jpg') no-repeat center center fixed;
+      padding: 0;
+      overflow: hidden;
+      background: url('https://i.ytimg.com/vi/1qiuIpSqkfo/maxresdefault.jpg') no-repeat center center fixed;
       background-size: cover;
-      color: #fff;
+      color: white;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      touch-action: manipulation;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+    }
+    #ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #score {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 2px 2px 0 #000, -2px -2px 0 #000;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: 3px dashed yellow;
+    }
+    #lives {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 2px 2px 0 #000;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 3px solid red;
+    }
+    #start-screen, #game-over {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0,0,0,0.7);
+      z-index: 20;
       text-align: center;
     }
-    #boss-img img {
-      width: 200px;
-      border: 5px dashed yellow;
-      border-radius: 20px;
-      background: rgba(0,0,0,0.3);
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      text-shadow: 3px 3px 0 #ff00cc, -3px -3px 0 #00ccff;
+      color: #ffff00;
+      animation: rainbow 2s infinite;
+    }
+    @keyframes rainbow {
+      0% { color: #ff0000; }
+      14% { color: #ff7f00; }
+      28% { color: #ffff00; }
+      42% { color: #00ff00; }
+      57% { color: #0000ff; }
+      71% { color: #4b0082; }
+      85% { color: #9400d3; }
+      100% { color: #ff0000; }
     }
     button {
-      font-size: 1.2em;
-      padding: 10px 20px;
-      margin: 10px;
-      border: 2px solid white;
-      border-radius: 10px;
-      background: purple;
+      background: linear-gradient(to bottom, #ff00cc, #00ccff);
+      border: none;
       color: white;
+      padding: 15px 30px;
+      font-size: 1.5em;
+      border-radius: 50px;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      transition: transform 0.3s, box-shadow 0.3s;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-top: 30px;
+      border: 3px solid white;
+      animation: pulse 1.5s infinite;
     }
-    #shop, #stats {
-      background: rgba(0,0,0,0.6);
-      padding: 10px;
-      margin: 10px;
-      border-radius: 10px;
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
     }
-    .bar {
+    button:hover {
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    }
+    button:active {
+      transform: scale(0.9) rotate(-5deg);
+    }
+    #game-over {
+      display: none;
+    }
+    #final-score {
+      font-size: 2.5em;
+      margin: 30px 0;
+      text-shadow: 2px 2px 0 #000;
+      color: #00ff00;
+      animation: bounce 0.5s infinite alternate;
+    }
+    @keyframes bounce {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+    #instructions {
+      max-width: 80%;
+      text-align: center;
+      margin-bottom: 30px;
+      line-height: 1.6;
+      font-size: 1.2em;
+      text-shadow: 1px 1px 0 #000;
+      color: #ffff00;
+    }
+    #high-score {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.5em;
+      font-weight: bold;
+      text-shadow: 2px 2px 0 #000;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 20px;
+      border-radius: 15px;
+      border: 2px dotted white;
+    }
+    .meme-text {
+      position: absolute;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 2px 2px 0 #000;
+      pointer-events: none;
+      animation: float-up 3s forwards;
+    }
+    @keyframes float-up {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-100px); opacity: 0; }
+    }
+    .explosion {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(255,100,0,0.8) 0%, rgba(255,0,0,0) 70%);
+      border-radius: 50%;
+      transform: scale(0);
+      animation: explode 0.5s forwards;
+    }
+    @keyframes explode {
+      to { transform: scale(3); opacity: 0; }
+    }
+    #music-toggle {
+      transition: all 0.3s ease;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 30;
+      font-size: 24px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #music-toggle:hover {
+      transform: scale(1.1);
+      background: rgba(0,0,0,0.7) !important;
+    }
+    #leaderboard {
+      position: absolute;
+      top: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      border-radius: 15px;
+      padding: 15px;
       width: 80%;
-      height: 20px;
-      background: #444;
-      border-radius: 10px;
-      margin: 10px auto;
+      max-width: 400px;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      z-index: 25;
+      border: 2px solid #ff00cc;
     }
-    .progress {
-      height: 100%;
-      background: lime;
-      border-radius: 10px;
-      width: 0%;
-      transition: width 0.3s;
+    #leaderboard h2 {
+      color: #ffff00;
+      text-align: center;
+      margin-top: 0;
+    }
+    #leaderboard table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #leaderboard th, #leaderboard td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #444;
+    }
+    #leaderboard th {
+      color: #00ccff;
+    }
+    #leaderboard tr:nth-child(even) {
+      background: rgba(255,255,255,0.1);
+    }
+    #leaderboard-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid white;
+      color: white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tg-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 10px;
+      vertical-align: middle;
     }
   </style>
 </head>
 <body>
-  <audio autoplay loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
-  </audio>
-  <h1>🧨 Кликер Крипера Наруто 🌀</h1>
-  <div id="boss-img"><img id="bossImage" src="https://i.imgur.com/vcNpEXI.png" alt="Босс"></div>
-  <div class="bar"><div id="progress" class="progress"></div></div>
-  <button onclick="clickBoss()">🔥 Лайкнуть Босса</button>
+<div id="ui">
+  <div id="score">0 МЕМОВ</div>
+  <div id="lives">❤️❤️❤️</div>
+  <div id="high-score">Рекорд: 0</div>
+</div>
 
-  <div id="shop">
-    <h2>🛒 Магазин</h2>
-    <button onclick="buyUpgrade('clickPower')">💥 СуперКлик (+1/клик) — 50 👍</button><br>
-    <button onclick="buyUpgrade('autoClick')">📺 Подписка (+1/сек) — 100 👍</button><br>
-    <button onclick="buyUpgrade('megaClick')">⚡️ МегаКлик (+5/клик) — 250 👍</button>
+<button id="leaderboard-btn">🏆</button>
+<div id="leaderboard">
+  <h2>Таблица лидеров</h2>
+  <table id="leaderboard-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Игрок</th>
+        <th>Рекорд</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div id="start-screen">
+  <h1>ЛОВИ МЕМЫ!</h1>
+  <div id="instructions">
+    Лови падающие мемы ведром!<br>
+    Избегай бомб - они отнимают жизни!<br>
+    Чем реже мем - тем больше очков!<br>
+    <span style="font-size: 0.8em;">(Просто двигай пальцем/мышкой)</span>
   </div>
+  <button id="start-btn">ПОГНАЛИ!</button>
+</div>
 
-  <div id="stats">
-    <h2>📊 Статистика</h2>
-    <p>👍 Лайков: <span id="likes">0</span></p>
-    <p>🎮 Уровень: <span id="level">1</span></p>
-  </div>
+<div id="game-over">
+  <h1>КОНЕЦ ИГРЫ</h1>
+  <div id="final-score">Поймано: 0 мемов</div>
+  <button id="restart-btn">ЕЩЁ РАЗ!</button>
+</div>
 
-  <script>
-    const bossImages = [
-      'https://i.imgur.com/vcNpEXI.png',
-      'https://i.imgur.com/YcHixMb.png',
-      'https://i.imgur.com/U7swfK0.png',
-      'https://i.imgur.com/tn5ZDqd.png'
+<canvas id="gameCanvas"></canvas>
+
+<script>
+  // Game elements
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreElement = document.getElementById('score');
+  const livesElement = document.getElementById('lives');
+  const highScoreElement = document.getElementById('high-score');
+  const startScreen = document.getElementById('start-screen');
+  const gameOverScreen = document.getElementById('game-over');
+  const finalScoreElement = document.getElementById('final-score');
+  const startBtn = document.getElementById('start-btn');
+  const restartBtn = document.getElementById('restart-btn');
+  
+  // Game state
+  let score = 0;
+  let lives = 3;
+  let highScore = localStorage.getItem('memeHighScore') || 0;
+  let gameRunning = false;
+  let animationFrameId;
+  let lastSpawnTime = 0;
+
+  // Leaderboard
+  let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+  const leaderboardBtn = document.getElementById('leaderboard-btn');
+  const leaderboardTable = document.getElementById('leaderboard-table');
+  const leaderboardElement = document.getElementById('leaderboard');
+
+  // Music
+  const backgroundMusic = new Audio('sounds/background-music.mp3');
+  backgroundMusic.loop = true;
+  backgroundMusic.volume = 0.3;
+  let isMusicPlaying = false;
+
+  // Music toggle button
+  const musicToggle = document.createElement('button');
+  musicToggle.id = 'music-toggle';
+  musicToggle.innerHTML = '🔇';
+  document.body.appendChild(musicToggle);
+
+  // Game objects
+  let bucket = { 
+    x: 200, 
+    y: 500, 
+    width: 100,
+    height: 80,
+    color: '#FF5722'
+  };
+  
+  let memes = [];
+  let bombs = [];
+  let memeImages = [];
+  let bombImage = new Image();
+  let particles = [];
+  let floatingTexts = [];
+  
+  // Sounds
+  const sounds = {
+    catch: new Audio('sounds/catch.mp3'),
+    bomb: new Audio('sounds/bomb.mp3'),
+    gameOver: new Audio('sounds/gameover.mp3'),
+    highScore: new Audio('sounds/highscore.mp3')
+  };
+  
+  // Meme types with different rarities
+  const memeTypes = [
+    { name: "Ждун", rarity: 1, points: 10 },
+    { name: "popcat", rarity: 1, points: 10 },
+    { name: "Дождь из мужиков", rarity: 2, points: 20 },
+    { name: "Серьёзный кот", rarity: 2, points: 20 },
+    { name: "Троллфейс", rarity: 3, points: 30 },
+    { name: "Йода", rarity: 3, points: 30 },
+    { name: "Доге", rarity: 4, points: 50 },
+    { name: "Pepe", rarity: 5, points: 100 },
+    { name: "Harold", rarity: 5, points: 100 },
+    { name: "Тун тун тун Сахур", rarity: 10, points: 200 }
+  ];
+  
+  // Load images
+  function loadImages() {
+    const memeUrls = [
+      'https://steamuserimages-a.akamaihd.net/ugc/90472493367987320/2F4D0894F18F0C96AA64DA536DB0445FF62DB709/?imw=512&amp;imh=685&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true',
+      'https://www.pngmart.com/files/23/Pop-Cat-PNG-Isolated-HD.png',
+      'https://cdna.artstation.com/p/assets/images/images/034/163/438/large/james-busby-big-image.jpg?1611582008',
+      'https://i.pinimg.com/originals/4b/dd/56/4bdd56ee84ddb2dc7b1aea998258930f.png',
+      'https://steamuserimages-a.akamaihd.net/ugc/1818895633364928244/3E8E8742F2A8764BFC6763E6D4357A7BFFC17423/?imw=512&amp;imh=412&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true',
+      'https://www.pngmart.com/files/12/Star-Wars-Master-Yoda-PNG-Transparent-Image.png',
+      'https://i.redd.it/vwyllr9wy8271.png',
+      'https://wallpapers.com/images/high/smug-pepe-the-frog-meme-i9skbogmokgpngux.png',
+      'https://i-a.d-cd.net/lxhiT1u6Y8GnXWwfhg0e-pAd5Y0-1920.jpg',
+      'https://tr.rbxcdn.com/180DAY-e7bf6d75c8753c56a2be9d55ec98fe47/420/420/Image/Png/noFilter'
     ];
-
-    let state = JSON.parse(localStorage.getItem('clickerState')) || {
-      likes: 0,
-      clickPower: 1,
-      autoClick: 0,
-      megaClick: 0,
-      progress: 0,
-      level: 1
-    };
-
-    const progressEl = document.getElementById('progress');
-    const bossImageEl = document.getElementById('bossImage');
-
-    function updateUI() {
-      document.getElementById('likes').textContent = state.likes;
-      document.getElementById('level').textContent = state.level;
-      progressEl.style.width = state.progress + '%';
-      bossImageEl.src = bossImages[(state.level - 1) % bossImages.length];
+    
+    memeUrls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+      memeImages.push(img);
+    });
+    
+    bombImage.src = 'https://www.pngplay.com/wp-content/uploads/6/Animated-Bomb-Transparent-Free-PNG.png';
+  }
+  
+  // Resize canvas
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    bucket.y = canvas.height - 100;
+    bucket.x = canvas.width / 2 - bucket.width / 2;
+  }
+  
+  // Update leaderboard
+  function updateLeaderboard() {
+    leaderboard.sort((a, b) => b.score - a.score);
+    if (leaderboard.length > 10) {
+      leaderboard = leaderboard.slice(0, 10);
     }
-
-    function clickBoss() {
-      let power = state.clickPower + (state.megaClick * 5);
-      state.likes += power;
-      state.progress += power;
-      if (state.progress >= 100) {
-        state.progress = 0;
-        state.level++;
+    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    
+    const tbody = leaderboardTable.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    leaderboard.forEach((player, index) => {
+      const row = document.createElement('tr');
+      
+      const rankCell = document.createElement('td');
+      rankCell.textContent = index + 1;
+      
+      const nameCell = document.createElement('td');
+      if (player.photo) {
+        const img = document.createElement('img');
+        img.src = player.photo;
+        img.className = 'tg-avatar';
+        nameCell.appendChild(img);
       }
-      saveState();
-      updateUI();
+      nameCell.appendChild(document.createTextNode(player.name || 'Аноним'));
+      
+      const scoreCell = document.createElement('td');
+      scoreCell.textContent = player.score;
+      
+      row.appendChild(rankCell);
+      row.appendChild(nameCell);
+      row.appendChild(scoreCell);
+      tbody.appendChild(row);
+    });
+  }
+  
+  // Add player to leaderboard
+  function addToLeaderboard(score) {
+    let userData = {};
+    
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tgUser = Telegram.WebApp.initDataUnsafe.user;
+      userData = {
+        id: tgUser.id,
+        name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username,
+        photo: tgUser.photo_url,
+        score: score
+      };
+    } else {
+      const userName = prompt('Поздравляем с новым рекордом! Введите ваше имя:', 'Аноним');
+      if (userName === null) return;
+      
+      userData = {
+        id: Date.now(),
+        name: userName,
+        score: score
+      };
     }
-
-    function buyUpgrade(type) {
-      if (type === 'clickPower' && state.likes >= 50) {
-        state.likes -= 50;
-        state.clickPower++;
-      } else if (type === 'autoClick' && state.likes >= 100) {
-        state.likes -= 100;
-        state.autoClick++;
-      } else if (type === 'megaClick' && state.likes >= 250) {
-        state.likes -= 250;
-        state.megaClick++;
+    
+    const existingPlayerIndex = leaderboard.findIndex(p => p.id === userData.id);
+    
+    if (existingPlayerIndex !== -1) {
+      if (score > leaderboard[existingPlayerIndex].score) {
+        leaderboard[existingPlayerIndex].score = score;
       }
-      saveState();
-      updateUI();
+    } else {
+      leaderboard.push(userData);
     }
-
-    function saveState() {
-      localStorage.setItem('clickerState', JSON.stringify(state));
+    
+    updateLeaderboard();
+  }
+  
+  // Spawn meme
+  function spawnMeme() {
+    if (Math.random() < 0.2) {
+      spawnBomb();
+      return;
     }
-
-    function autoClicker() {
-      if (state.autoClick > 0) {
-        state.likes += state.autoClick;
-        state.progress += state.autoClick;
-        if (state.progress >= 100) {
-          state.progress = 0;
-          state.level++;
+    
+    let memeType;
+    const roll = Math.random() * 100;
+    
+    if (roll < 40) {
+      memeType = memeTypes[0];
+    } else if (roll < 70) {
+      memeType = memeTypes[1];
+    } else if (roll < 85) {
+      memeType = memeTypes[2];
+    } else if (roll < 95) {
+      memeType = memeTypes[3];
+    } else if (roll < 98) {
+      memeType = memeTypes[4];
+    } else {
+      memeType = memeTypes[Math.floor(Math.random() * memeTypes.length)];
+    }
+    
+    const size = 50 + Math.random() * 50;
+    const memeIndex = memeTypes.findIndex(m => m.name === memeType.name);
+    
+    memes.push({
+      x: Math.random() * (canvas.width - size),
+      y: -size,
+      width: size,
+      height: size,
+      speed: 2 + Math.random() * 3,
+      type: memeType,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.1,
+      wobble: Math.random() * 5,
+      wobbleSpeed: Math.random() * 0.1,
+      time: 0,
+      image: memeImages[memeIndex],
+      isBomb: false
+    });
+  }
+  
+  // Spawn bomb
+  function spawnBomb() {
+    const size = 60;
+    
+    bombs.push({
+      x: Math.random() * (canvas.width - size),
+      y: -size,
+      width: size,
+      height: size,
+      speed: 3 + Math.random() * 2,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.2,
+      time: 0,
+      image: bombImage,
+      isBomb: true
+    });
+  }
+  
+  // Create particles
+  function createParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 5 + 2;
+      
+      particles.push({
+        x: x,
+        y: y,
+        size: Math.random() * 8 + 3,
+        color: color,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 30 + Math.random() * 30,
+        opacity: 1
+      });
+    }
+  }
+  
+  // Create explosion
+  function createExplosion(x, y) {
+    const explosion = document.createElement('div');
+    explosion.className = 'explosion';
+    explosion.style.left = `${x - 50}px`;
+    explosion.style.top = `${y - 50}px`;
+    document.body.appendChild(explosion);
+    
+    setTimeout(() => {
+      explosion.remove();
+    }, 500);
+    
+    sounds.bomb.play().catch(e => console.log("Sound error:", e));
+  }
+  
+  // Create floating text
+  function createFloatingText(text, x, y, color) {
+    floatingTexts.push({
+      text: text,
+      x: x,
+      y: y,
+      color: color,
+      life: 100
+    });
+  }
+  
+  // Draw bucket
+  function drawBucket() {
+    ctx.fillStyle = bucket.color;
+    ctx.beginPath();
+    ctx.moveTo(bucket.x, bucket.y);
+    ctx.lineTo(bucket.x + bucket.width, bucket.y);
+    ctx.lineTo(bucket.x + bucket.width - 20, bucket.y + bucket.height);
+    ctx.lineTo(bucket.x + 20, bucket.y + bucket.height);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.strokeStyle = '#FFC107';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(bucket.x + 20, bucket.y + 10);
+    ctx.quadraticCurveTo(
+      bucket.x + bucket.width / 2, 
+      bucket.y - 30, 
+      bucket.x + bucket.width - 20, 
+      bucket.y + 10
+    );
+    ctx.stroke();
+  }
+  
+  // Update lives display
+  function updateLivesDisplay() {
+    livesElement.textContent = '❤️'.repeat(lives) + '♡'.repeat(3 - lives);
+    
+    livesElement.style.transform = 'scale(1.5)';
+    livesElement.style.color = 'red';
+    setTimeout(() => {
+      livesElement.style.transform = 'scale(1)';
+      livesElement.style.color = '';
+    }, 300);
+  }
+  
+  // Random color
+  function getRandomColor() {
+    const colors = [
+      '#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', 
+      '#9C27B0', '#FF9800', '#00BCD4', '#E91E63',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF5722'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+  
+  // Game update
+  function update() {
+    const now = Date.now();
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    for (let i = 0; i < 50; i++) {
+      ctx.fillRect(
+        Math.random() * canvas.width,
+        Math.random() * canvas.height,
+        2, 2
+      );
+    }
+    
+    if (gameRunning && now - lastSpawnTime > 500 - Math.min(score, 500) / 3) {
+      spawnMeme();
+      lastSpawnTime = now;
+    }
+    
+    drawBucket();
+    
+    for (let i = memes.length - 1; i >= 0; i--) {
+      const meme = memes[i];
+      
+      meme.y += meme.speed;
+      meme.rotation += meme.rotationSpeed;
+      meme.time += 0.1;
+      meme.wobble = Math.sin(meme.time * meme.wobbleSpeed) * 5;
+      
+      ctx.save();
+      ctx.translate(meme.x + meme.width/2, meme.y + meme.height/2);
+      ctx.rotate(meme.rotation);
+      
+      if (meme.image && meme.image.complete) {
+        ctx.drawImage(
+          meme.image, 
+          -meme.width/2 + meme.wobble, 
+          -meme.height/2, 
+          meme.width, 
+          meme.height
+        );
+      } else {
+        ctx.fillStyle = getRandomColor();
+        ctx.fillRect(
+          -meme.width/2 + meme.wobble, 
+          -meme.height/2, 
+          meme.width, 
+          meme.height
+        );
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+          -meme.width/2 + meme.wobble, 
+          -meme.height/2, 
+          meme.width, 
+          meme.height
+        );
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText(
+          meme.type.name, 
+          -meme.width/2 + meme.wobble + 5, 
+          -meme.height/2 + 15
+        );
+      }
+      
+      ctx.restore();
+      
+      if (
+        meme.y + meme.height > bucket.y &&
+        meme.x + meme.width > bucket.x &&
+        meme.x < bucket.x + bucket.width &&
+        meme.y + meme.height < bucket.y + bucket.height
+      ) {
+        createParticles(
+          meme.x + meme.width/2, 
+          meme.y + meme.height/2, 
+          getRandomColor(), 
+          20
+        );
+        
+        createFloatingText(
+          `+${meme.type.points} ${meme.type.name.toUpperCase()}!`,
+          meme.x + meme.width/2,
+          meme.y,
+          getRandomColor()
+        );
+        
+        memes.splice(i, 1);
+        score += meme.type.points;
+        scoreElement.textContent = `${score} МЕМОВ`;
+        
+        scoreElement.style.transform = 'translateX(-50%) scale(1.3) rotate(5deg)';
+        setTimeout(() => {
+          scoreElement.style.transform = 'translateX(-50%) scale(1) rotate(0)';
+        }, 200);
+        
+        sounds.catch.play().catch(e => console.log("Sound error:", e));
+      } else if (meme.y > canvas.height + meme.height) {
+        memes.splice(i, 1);
+      }
+    }
+    
+    for (let i = bombs.length - 1; i >= 0; i--) {
+      const bomb = bombs[i];
+      
+      bomb.y += bomb.speed;
+      bomb.rotation += bomb.rotationSpeed;
+      bomb.time += 0.1;
+      
+      ctx.save();
+      ctx.translate(bomb.x + bomb.width/2, bomb.y + bomb.height/2);
+      ctx.rotate(bomb.rotation);
+      
+      if (bomb.image && bomb.image.complete) {
+        ctx.drawImage(
+          bomb.image, 
+          -bomb.width/2, 
+          -bomb.height/2, 
+          bomb.width, 
+          bomb.height
+        );
+      } else {
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(0, 0, bomb.width/2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText('БОМБА', -20, 5);
+      }
+      
+      ctx.restore();
+      
+      if (
+        bomb.y + bomb.height > bucket.y &&
+        bomb.x + bomb.width > bucket.x &&
+        bomb.x < bucket.x + bucket.width &&
+        bomb.y + bomb.height < bucket.y + bucket.height
+      ) {
+        createExplosion(bomb.x + bomb.width/2, bomb.y + bomb.height/2);
+        bombs.splice(i, 1);
+        lives--;
+        updateLivesDisplay();
+        
+        if (lives <= 0) {
+          gameOver();
+        } else {
+          document.body.style.animation = 'shake 0.5s';
+          setTimeout(() => {
+            document.body.style.animation = '';
+          }, 500);
         }
-        saveState();
-        updateUI();
+      } else if (bomb.y > canvas.height + bomb.height) {
+        bombs.splice(i, 1);
       }
     }
-
-    setInterval(autoClicker, 1000);
-    updateUI();
-  </script>
+    
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.2;
+      p.life--;
+      p.opacity = p.life / 60;
+      
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+      }
+    }
+    ctx.globalAlpha = 1;
+    
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+      const text = floatingTexts[i];
+      
+      ctx.font = 'bold 24px Comic Sans MS';
+      ctx.fillStyle = text.color;
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.strokeText(text.text, text.x, text.y);
+      ctx.fillText(text.text, text.x, text.y);
+      
+      text.y -= 2;
+      text.life--;
+      
+      if (text.life <= 0) {
+        floatingTexts.splice(i, 1);
+      }
+    }
+    
+    if (gameRunning) {
+      animationFrameId = requestAnimationFrame(update);
+    }
+  }
+  
+  // Start game
+  function startGame() {
+    score = 0;
+    lives = 3;
+    scoreElement.textContent = `${score} МЕМОВ`;
+    updateLivesDisplay();
+    memes = [];
+    bombs = [];
+    particles = [];
+    floatingTexts = [];
+    gameRunning = true;
+    startScreen.style.display = 'none';
+    gameOverScreen.style.display = 'none';
+    lastSpawnTime = Date.now();
+    
+    if (localStorage.getItem('musicState') !== 'false') {
+      isMusicPlaying = true;
+      backgroundMusic.play().catch(e => console.log("Music error:", e));
+      musicToggle.innerHTML = '🔊';
+    }
+    
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => spawnMeme(), i * 500);
+    }
+    
+    update();
+  }
+  
+  // Game over
+  function gameOver() {
+    gameRunning = false;
+    finalScoreElement.textContent = `Поймано: ${score} мемов`;
+    gameOverScreen.style.display = 'flex';
+    
+    sounds.gameOver.play().catch(e => console.log("Sound error:", e));
+    
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('memeHighScore', highScore);
+      highScoreElement.textContent = `Рекорд: ${highScore}`;
+      
+      finalScoreElement.textContent = `НОВЫЙ РЕКОРД: ${highScore}!`;
+      finalScoreElement.style.animation = 'rainbow 0.5s infinite';
+      
+      sounds.highScore.play().catch(e => console.log("Sound error:", e));
+      
+      addToLeaderboard(highScore);
+    }
+    
+    cancelAnimationFrame(animationFrameId);
+  }
+  
+  // Event listeners
+  startBtn.addEventListener('click', startGame);
+  restartBtn.addEventListener('click', startGame);
+  
+  // Controls
+  function handleMove(x) {
+    if (!gameRunning) return;
+    
+    const targetX = Math.max(
+      bucket.width/2, 
+      Math.min(x - bucket.width/2, canvas.width - bucket.width/2)
+    );
+    bucket.x += (targetX - bucket.x) * 0.2;
+  }
+  
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleMove(touch.clientX);
+  }, { passive: false });
+  
+  canvas.addEventListener('mousemove', e => {
+    handleMove(e.clientX);
+  });
+  
+  // Music toggle
+  musicToggle.addEventListener('click', () => {
+    isMusicPlaying = !isMusicPlaying;
+    if (isMusicPlaying) {
+      backgroundMusic.play().catch(e => console.log("Music error:", e));
+      musicToggle.innerHTML = '🔊';
+    } else {
+      backgroundMusic.pause();
+      musicToggle.innerHTML = '🔇';
+    }
+    localStorage.setItem('musicState', isMusicPlaying);
+  });
+  
+  // Leaderboard toggle
+  leaderboardBtn.addEventListener('click', () => {
+    const isVisible = leaderboardElement.style.display === 'block';
+    leaderboardElement.style.display = isVisible ? 'none' : 'block';
+  });
+  
+  // Initialize
+  loadImages();
+  resize();
+  updateLeaderboard();
+  
+  // Telegram integration
+  if (window.Telegram && window.Telegram.WebApp) {
+    Telegram.WebApp.expand();
+    Telegram.WebApp.enableClosingConfirmation();
+    
+    Telegram.WebApp.BackButton.onClick(() => {
+      if (gameRunning) {
+        gameOver();
+      } else {
+        Telegram.WebApp.close();
+      }
+    });
+    
+    const tgUser = Telegram.WebApp.initDataUnsafe.user;
+    if (tgUser) {
+      const userName = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username;
+      console.log(`Игрок: ${userName}`);
+    }
+  }
+</script>
 </body>
 </html>
